@@ -74,22 +74,24 @@ docs/answer-sheet-layout.md    Answer sheet layout and how the reader works
 tools/test/                    Realistic test photos for the reader
 ```
 
-## Build the Android app from your phone (GitHub Codespaces)
+## Get the Android app (APK)
 
-No computer needed. Codespaces is a free cloud computer that opens in your phone's browser. The app is already linked to the **zelvo** project on expo.dev and connects to the Zelvo Supabase project (see `src/lib/config.ts`).
+GitHub builds the APK automatically (`.github/workflows/build-apk.yml`), free for this public repository:
 
-1. Open the `zelvo` repository on github.com and tap **Code → Codespaces → Create codespace on main**. If the page is cramped, switch your browser to **Desktop site**. Wait until setup finishes; it installs everything automatically.
-2. In the **Terminal** at the bottom, run these one at a time, answering **Y** (yes) to each question:
-   ```bash
-   npx eas-cli@latest login
-   npx eas-cli@latest build --platform android --profile preview
-   ```
-   - `login` uses your expo.dev account.
-   - The first `build` asks to create an Android signing key; say yes, and Expo stores it safely.
-3. Expo builds the app on its servers (the free plan can queue for a while) and prints a link. Open it on your phone and install the APK.
-4. Stop the codespace when you're done (github.com/codespaces → **⋯ → Stop**) so it doesn't use up your free hours.
+- **Every change to the app's code** starts a build. It takes about 15–20 minutes.
+- To build by hand: on github.com or the GitHub app, open **Actions → Build APK → Run workflow**.
+- When it's done, open the repository's **Releases**, tap the newest **Zelvo build**, then tap the `.apk` file to download and install it.
 
-After this first build, later builds can also be started from expo.dev with **Build from GitHub**.
+Builds are signed with a development key, so a new build installs over the previous one. (If a Zelvo built on expo.dev is installed, uninstall it once first.)
+
+### Alternative: build on expo.dev (EAS)
+
+The app is also linked to the **zelvo** project on expo.dev. From a GitHub Codespace (**Code → Codespaces → Create codespace on main**):
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest build --platform android --profile preview
+```
 
 ## Checks
 

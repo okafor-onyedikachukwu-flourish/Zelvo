@@ -1,0 +1,71 @@
+# Builds the Zelvo Android app (APK) on GitHub's servers and publishes it under Releases.
+# Runs on every change to the app's code, or by hand: Actions → Build APK → Run workflow.
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'tools/**'
+      - 'supabase/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Create the Android project
+        run: |
+          npx expo prebuild --platform android --no-install --clean
+          # Each build gets a higher version number, so a new APK installs over the old one.
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/" android/app/build.gradle
+
+      - name: Build the APK
+        working-directory: android
+        # Only the processor types phones use (not emulators), for a smaller, faster build.
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Name the file
+        run: cp android/app/build/outputs/apk/release/app-release.apk zelvo-${{ github.run_number }}.apk
+
+      - name: Publish under Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Zelvo build ${{ github.run_number }}
+          make_latest: true
+          files: zelvo-${{ github.run_number }}.apk
+          body: |
+            **To install on an Android phone:** tap `zelvo-${{ github.run_number }}.apk` below, open the downloaded file and allow installing from your browser if Android asks.
+
+            This test build is signed with a development key. If an older Zelvo built on expo.dev is installed, uninstall it first; later builds from here install over each other.
+
+            Built from ${{ github.sha }}.
