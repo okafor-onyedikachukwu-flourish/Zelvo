@@ -226,9 +226,9 @@ export type Database = {
         ];
       };
       staff_invites: {
-        Row: { code: string; created_at: string; school_id: string; staff_id: string };
-        Insert: { code: string; created_at?: string; school_id: string; staff_id: string };
-        Update: { code?: string; created_at?: string; school_id?: string; staff_id?: string };
+        Row: { code: string; created_at: string; email: string | null; school_id: string; staff_id: string };
+        Insert: { code: string; created_at?: string; email?: string | null; school_id: string; staff_id: string };
+        Update: { code?: string; created_at?: string; email?: string | null; school_id?: string; staff_id?: string };
         Relationships: [
           {
             foreignKeyName: 'staff_invites_school_id_fkey';
@@ -426,6 +426,7 @@ export type Database = {
       };
       regenerate_invite: { Args: { p_staff_id: string }; Returns: string };
       request_student_access: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
+      set_invite_email: { Args: { p_staff_id: string; p_email: string | null }; Returns: undefined };
       school_classes: { Args: { p_school: string }; Returns: { id: string; name: string }[] };
     };
     Enums: { [_ in never]: never };

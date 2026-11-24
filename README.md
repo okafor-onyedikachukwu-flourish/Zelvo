@@ -55,6 +55,13 @@ Everyone signs up with their own email. The role comes from the school, not from
 
 Only an exam's creator or the head of school can change an exam or its scripts. Students see results only after the teacher switches on **Students can see results**.
 
+### Sending join codes by email
+
+When adding a teacher or head of department, the head of school can type the person's own email (for example their Gmail).
+"Send to their email" opens the phone's email app with the code and instructions ready; the head just taps Send.
+A code with an email attached only works for an account made with that email, so a forwarded code is useless to anyone else.
+The email can be added or changed later on the person's page, and it is kept when a new code is made.
+
 ## Updates inside the app
 
 Zelvo checks GitHub Releases for a newer build when it opens. If there is one, it shows **Update available → Update now**: one tap downloads the APK and opens Android's installer (Android always asks to confirm installs from outside the Play Store, and the first time it may ask to allow installs from Zelvo). **Account → Check for updates** does the same on demand.

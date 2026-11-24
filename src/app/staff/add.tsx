@@ -5,18 +5,19 @@ import { colors, space } from '../../components/theme';
 import { RolePicker } from '../../components/RolePicker';
 import { Banner, Button, Card, Chip, Field, Input, Screen } from '../../components/ui';
 import { friendlyError } from '../../lib/errors';
-import { copyCode, formatCode, shareInvite } from '../../lib/invites';
+import { copyCode, emailInvite, formatCode, looksLikeEmail, shareInvite } from '../../lib/invites';
 import { parseNames } from '../../lib/names';
 import type { Role } from '../../lib/school';
 import { useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 
-type Added = { name: string; code: string };
+type Added = { name: string; code: string; email: string | null };
 
 export default function AddStaff() {
   const { school, schoolId } = useCurrentSchool();
   const [mode, setMode] = useState<'one' | 'many'>('one');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [list, setList] = useState('');
   const [role, setRole] = useState<Role>('teacher');
   const [subjectId, setSubjectId] = useState<string | null>(null);
@@ -29,6 +30,7 @@ export default function AddStaff() {
   async function addOne() {
     if (name.trim().length < 2) return setError("Enter the person's full name.");
     if (role === 'hod' && !subjectId) return setError('Choose the subject this head of department is responsible for.');
+    if (email.trim() && !looksLikeEmail(email)) return setError('Check the email address, e.g. name@gmail.com.');
     setBusy(true);
     setError(null);
     try {
@@ -39,9 +41,12 @@ export default function AddStaff() {
           .select('id')
           .single(),
       );
+      const cleanEmail = email.trim().toLowerCase() || null;
+      if (cleanEmail) must(await supabase.rpc('set_invite_email', { p_staff_id: row.id, p_email: cleanEmail }));
       const invite = must(await supabase.from('staff_invites').select('code').eq('staff_id', row.id).single());
-      setAdded({ name: name.trim(), code: invite.code });
+      setAdded({ name: name.trim(), code: invite.code, email: cleanEmail });
       setName('');
+      setEmail('');
       setCopied(false);
     } catch (e) {
       setError(friendlyError(e));
@@ -71,10 +76,26 @@ export default function AddStaff() {
           <Text style={{ fontSize: 14, color: colors.muted }}>Their join code</Text>
           <Text style={{ fontSize: 32, fontWeight: '800', letterSpacing: 4, color: colors.text }}>{formatCode(added.code)}</Text>
           <Text style={{ fontSize: 13, color: colors.muted, textAlign: 'center' }}>
-            Send it to them. They enter it in Zelvo after creating their account.
+            {added.email
+              ? `It only works for an account made with ${added.email}. Send it to that email.`
+              : 'Send it to them. They enter it in Zelvo after creating their account.'}
           </Text>
-          <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.sm }}>
-            <Button small icon="share-social-outline" title="Share" onPress={() => shareInvite(added.name, school.name, added.code)} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.sm, marginTop: space.sm }}>
+            {added.email ? (
+              <Button
+                small
+                icon="mail-outline"
+                title="Send to their email"
+                onPress={() => emailInvite(added.email!, added.name, school.name, added.code)}
+              />
+            ) : null}
+            <Button
+              small
+              variant={added.email ? 'secondary' : 'primary'}
+              icon="share-social-outline"
+              title="Share"
+              onPress={() => shareInvite(added.name, school.name, added.code)}
+            />
             <Button
               small
               variant="secondary"
@@ -104,7 +125,17 @@ export default function AddStaff() {
       {mode === 'one' ? (
         <>
           <Field label="Full name">
-            <Input value={name} onChangeText={setName} placeholder="e.g. Emeka Obi" onSubmitEditing={addOne} />
+            <Input value={name} onChangeText={setName} placeholder="e.g. Emeka Obi" />
+          </Field>
+          <Field label="Their email (e.g. Gmail)" hint="Optional. You can send the code straight to this email, and it will only work for an account made with it.">
+            <Input
+              value={email}
+              onChangeText={setEmail}
+              placeholder="name@gmail.com"
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+            />
           </Field>
           <RolePicker
             role={role}
