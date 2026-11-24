@@ -8,19 +8,19 @@ import { roleLabel, useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
-type Counts = { classes: number; subjects: number; students: number; staff: number; joined: number; requests: number };
+type Counts = { classes: number; subjects: number; students: number; staff: number; requests: number; staffRequests: number };
 
-async function loadCounts(schoolId: string): Promise<Counts> {
+async function loadCounts(schoolId: string, isAdmin: boolean): Promise<Counts> {
   const count = async (table: 'classes' | 'subjects' | 'students') => {
     const res = await supabase.from(table).select('id', { count: 'exact', head: true }).eq('school_id', schoolId);
     if (res.error) throw res.error;
     return res.count ?? 0;
   };
-  const [classes, subjects, students, staff, requests] = await Promise.all([
+  const [classes, subjects, students, staff, requests, staffRequests] = await Promise.all([
     count('classes'),
     count('subjects'),
     count('students'),
-    supabase.from('staff').select('user_id').eq('school_id', schoolId).then(must),
+    supabase.from('staff').select('user_id').eq('school_id', schoolId).not('user_id', 'is', null).then(must),
     supabase
       .from('student_accounts')
       .select('id', { count: 'exact', head: true })
@@ -30,13 +30,24 @@ async function loadCounts(schoolId: string): Promise<Counts> {
         if (r.error) throw r.error;
         return r.count ?? 0;
       }),
+    isAdmin
+      ? supabase
+          .from('staff_requests')
+          .select('id', { count: 'exact', head: true })
+          .eq('school_id', schoolId)
+          .eq('status', 'pending')
+          .then((r) => {
+            if (r.error) throw r.error;
+            return r.count ?? 0;
+          })
+      : Promise.resolve(0),
   ]);
-  return { classes, subjects, students, staff: staff.length, joined: staff.filter((s) => s.user_id).length, requests };
+  return { classes, subjects, students, staff: staff.length, requests, staffRequests };
 }
 
 export default function Home() {
-  const { school, schoolId, fullName, role, isAdmin, isHod } = useCurrentSchool();
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => loadCounts(schoolId), schoolId);
+  const { school, schoolId, fullName, role, headTitle, isAdmin, isHod } = useCurrentSchool();
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => loadCounts(schoolId, isAdmin), `${schoolId}:${isAdmin}`);
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
@@ -45,11 +56,19 @@ export default function Home() {
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <UpdateBanner />
+      {c.staffRequests > 0 ? (
+        <Banner
+          tone="info"
+          icon="people-outline"
+          title={`${c.staffRequests} ${c.staffRequests === 1 ? 'person is' : 'people are'} asking to join your staff`}
+          action={<Button small title="Review" onPress={() => router.push('/staff')} />}
+        />
+      ) : null}
       {c.requests > 0 ? (
         <Banner
           tone="info"
           icon="school-outline"
-          title={`${c.requests} ${c.requests === 1 ? 'student is' : 'students are'} waiting for approval`}
+          title={`${c.requests} ${c.requests === 1 ? 'student is' : 'students are'} waiting for a teacher to confirm them`}
           action={<Button small title="Review" onPress={() => router.push('/student-requests')} />}
         />
       ) : null}
@@ -57,7 +76,7 @@ export default function Home() {
         <Text style={{ fontSize: 14, color: colors.muted }}>Hello, {fullName.split(' ')[0]}</Text>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 }}>{school.name}</Text>
         <View style={{ flexDirection: 'row', marginTop: space.sm }}>
-          <Badge label={roleLabel(role)} tone="primary" />
+          <Badge label={roleLabel(role, null, headTitle)} tone="primary" />
         </View>
       </Card>
 
@@ -66,7 +85,7 @@ export default function Home() {
           <ListRow
             icon="stats-chart-outline"
             title={isAdmin ? 'School performance' : isHod ? 'Department performance' : 'My exams performance'}
-            subtitle={isAdmin ? 'Average scores, class by class' : isHod ? 'Your subject in every class' : 'Averages for the exams you set'}
+            subtitle={isAdmin ? 'Average scores, class by class' : isHod ? 'Your department in every class' : 'Averages for the exams you set'}
             onPress={() => router.push('/performance')}
           />
         </Group>
@@ -77,11 +96,16 @@ export default function Home() {
           <SectionTitle>Set up your school</SectionTitle>
           <Group>
             <Step done={c.classes > 0} title="Add classes" detail={plural(c.classes, 'class', 'classes')} href="/classes" />
-            <Step done={c.subjects > 0} title="Add subjects" detail={plural(c.subjects, 'subject', 'subjects')} href="/subjects" />
+            <Step
+              done={c.subjects > 0}
+              title="Add departments"
+              detail={`${plural(c.subjects, 'department', 'departments')}. Staff choose from these when they join.`}
+              href="/subjects"
+            />
             <Step
               done={c.staff > 1}
-              title="Add teachers"
-              detail={`${c.joined} of ${c.staff} staff have joined`}
+              title="Approve your staff"
+              detail={`${plural(c.staff, 'person', 'people')} on Zelvo. Staff join from their own phones.`}
               href="/staff"
             />
             <Step
@@ -97,8 +121,8 @@ export default function Home() {
           <SectionTitle>Your school</SectionTitle>
           <Group>
             <ListRow icon="people-outline" title="Classes" subtitle={plural(c.classes, 'class', 'classes')} onPress={() => router.push('/classes')} />
-            <ListRow icon="book-outline" title="Subjects" subtitle={plural(c.subjects, 'subject', 'subjects')} onPress={() => router.push('/subjects')} />
-            <ListRow icon="id-card-outline" title="Staff" subtitle={plural(c.joined, 'member', 'members')} onPress={() => router.push('/staff')} />
+            <ListRow icon="book-outline" title="Departments" subtitle={plural(c.subjects, 'department', 'departments')} onPress={() => router.push('/subjects')} />
+            <ListRow icon="id-card-outline" title="Staff" subtitle={plural(c.staff, 'member', 'members')} onPress={() => router.push('/staff')} />
           </Group>
         </>
       )}

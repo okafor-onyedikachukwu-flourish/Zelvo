@@ -181,6 +181,7 @@ export type Database = {
         Row: {
           created_at: string;
           full_name: string;
+          head_title: string | null;
           id: string;
           joined_at: string | null;
           role: string;
@@ -191,6 +192,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           full_name: string;
+          head_title?: string | null;
           id?: string;
           joined_at?: string | null;
           role?: string;
@@ -201,6 +203,7 @@ export type Database = {
         Update: {
           created_at?: string;
           full_name?: string;
+          head_title?: string | null;
           id?: string;
           joined_at?: string | null;
           role?: string;
@@ -230,6 +233,63 @@ export type Database = {
         Insert: { code: string; created_at?: string; created_by?: string | null; email: string; school_id: string; student_id: string };
         Update: { code?: string; created_at?: string; created_by?: string | null; email?: string; school_id?: string; student_id?: string };
         Relationships: [];
+      };
+      staff_requests: {
+        Row: {
+          applied_as: string;
+          created_at: string;
+          decided_by: string | null;
+          full_name: string;
+          id: string;
+          school_id: string;
+          status: string;
+          subject_ids: string[];
+          user_id: string;
+        };
+        Insert: {
+          applied_as: string;
+          created_at?: string;
+          decided_by?: string | null;
+          full_name: string;
+          id?: string;
+          school_id: string;
+          status?: string;
+          subject_ids?: string[];
+          user_id?: string;
+        };
+        Update: {
+          applied_as?: string;
+          created_at?: string;
+          decided_by?: string | null;
+          full_name?: string;
+          id?: string;
+          school_id?: string;
+          status?: string;
+          subject_ids?: string[];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      staff_subjects: {
+        Row: { school_id: string; staff_id: string; subject_id: string };
+        Insert: { school_id: string; staff_id: string; subject_id: string };
+        Update: { school_id?: string; staff_id?: string; subject_id?: string };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_subjects_subject_id_school_id_fkey';
+            columns: ['subject_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'subjects';
+            referencedColumns: ['id', 'school_id'];
+          },
+          {
+            foreignKeyName: 'staff_subjects_staff_id_school_id_fkey';
+            columns: ['staff_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff';
+            referencedColumns: ['id', 'school_id'];
+          },
+        ];
       };
       staff_invites: {
         Row: { code: string; created_at: string; email: string | null; school_id: string; staff_id: string };
@@ -352,6 +412,8 @@ export type Database = {
         Args: { p_admin_name: string; p_country?: string; p_name: string; p_timezone?: string };
         Returns: string;
       };
+      confirm_new_student: { Args: { p_request: string }; Returns: undefined };
+      decide_staff_request: { Args: { p_request: string; p_approve: boolean }; Returns: undefined };
       decide_student_access: { Args: { p_request: string; p_student: string | null; p_approve: boolean }; Returns: undefined };
       exam_performance: {
         Args: { p_school: string };
@@ -372,6 +434,7 @@ export type Database = {
       };
       find_schools: { Args: { p_query: string }; Returns: { id: string; name: string; country: string | null }[] };
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
+      join_class: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
       join_as_student: { Args: { p_code: string }; Returns: string };
       join_school: { Args: { p_code: string }; Returns: string };
       my_results: {
@@ -389,6 +452,19 @@ export type Database = {
           answer_key: string;
           answers: string;
           updated_at: string;
+        }[];
+      };
+      my_staff_requests: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          school_id: string;
+          school_name: string;
+          full_name: string;
+          applied_as: string;
+          subject_names: string[];
+          status: string;
+          created_at: string;
         }[];
       };
       my_student_accounts: {
@@ -444,9 +520,26 @@ export type Database = {
         Returns: string;
       };
       regenerate_invite: { Args: { p_staff_id: string }; Returns: string };
+      request_staff_access: {
+        Args: { p_school: string; p_applied_as: string; p_name: string; p_subjects?: string[] };
+        Returns: string;
+      };
       request_student_access: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
       send_student_code: { Args: { p_student: string; p_email: string; p_new?: boolean }; Returns: string };
       set_invite_email: { Args: { p_staff_id: string; p_email: string | null }; Returns: undefined };
+      school_openings: { Args: { p_school: string }; Returns: { has_vp: boolean; full_departments: string[] }[] };
+      school_staff_requests: {
+        Args: { p_school: string };
+        Returns: {
+          id: string;
+          full_name: string;
+          email: string;
+          applied_as: string;
+          subject_names: string[];
+          created_at: string;
+        }[];
+      };
+      school_subjects: { Args: { p_school: string }; Returns: { id: string; name: string }[] };
       school_classes: { Args: { p_school: string }; Returns: { id: string; name: string }[] };
     };
     Enums: { [_ in never]: never };

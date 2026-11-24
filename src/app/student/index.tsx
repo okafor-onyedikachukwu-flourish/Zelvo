@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UpdateBanner } from '../../components/UpdateBanner';
 import { colors, space } from '../../components/theme';
-import { Badge, Button, Card, EmptyState, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle, confirm } from '../../components/ui';
+import { Badge, Banner, Button, Card, EmptyState, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle, confirm } from '../../components/ui';
 import { useSchool } from '../../lib/school';
 import { scoreScript } from '../../lib/scoring';
 import { formatDate } from '../../lib/sheet/render';
@@ -12,8 +12,10 @@ import { supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
 export default function StudentHome() {
-  const { studentAccounts, isOwner } = useSchool();
-  const me = studentAccounts.find((a) => a.status === 'approved');
+  const { studentAccounts, isOwner, refresh: refreshAccounts } = useSchool();
+  // Confirmed first; otherwise the latest request (waiting for a teacher, or not confirmed).
+  const me = studentAccounts.find((a) => a.status === 'approved') ?? studentAccounts[0];
+  const confirmed = me?.status === 'approved';
   const { data, loading, error, reload, refresh, refreshing } = useLoad(loadMyResults, me?.id ?? '');
 
   async function logOut() {
@@ -26,7 +28,13 @@ export default function StudentHome() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Screen refreshing={refreshing} onRefresh={refresh}>
+      <Screen
+        refreshing={refreshing}
+        onRefresh={() => {
+          refreshAccounts(); // picks up a teacher's confirmation
+          refresh();
+        }}
+      >
         <UpdateBanner />
         <Card style={{ gap: 4 }}>
           <Text style={{ fontSize: 14, color: colors.muted }}>Student</Text>
@@ -36,8 +44,29 @@ export default function StudentHome() {
           </Text>
         </Card>
 
+        {me?.status === 'pending' ? (
+          <Banner
+            tone="info"
+            icon="time-outline"
+            title="Waiting for a teacher to confirm you"
+            text="Your scores will show here once a teacher at your school confirms your name. Pull down to check."
+            action={<Button small variant="secondary" title="Change class or name" onPress={() => router.push('/student/join')} />}
+          />
+        ) : null}
+        {me?.status === 'declined' ? (
+          <Banner
+            tone="warning"
+            icon="close-circle-outline"
+            title="Your teacher couldn't confirm you"
+            text="Check your class and name, then try again."
+            action={<Button small title="Change class or name" onPress={() => router.push('/student/join')} />}
+          />
+        ) : null}
+
         <SectionTitle>Your results</SectionTitle>
-        {results.length === 0 ? (
+        {!confirmed ? (
+          <EmptyState icon="lock-closed-outline" title="Not yet" text="Your results appear here once a teacher confirms you." />
+        ) : results.length === 0 ? (
           <EmptyState icon="document-text-outline" title="No results yet" text="Your results appear here when your teacher releases them." />
         ) : (
           <Group>

@@ -1,101 +1,7 @@
-// Helpers for signing up and logging in: join codes used before an account exists,
-// Google sign-in, and spotting typos in email addresses.
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Helpers for signing up and logging in: Google sign-in and spotting typos in email addresses.
 import * as WebBrowser from 'expo-web-browser';
-import { Alert } from 'react-native';
 import { SUPABASE_KEY, SUPABASE_URL } from './config';
-import { friendlyError } from './errors';
 import { supabase } from './supabase';
-
-// ---------- Codes typed before signing up ----------
-
-export type CodeInfo = {
-  code: string;
-  kind: 'staff' | 'student';
-  schoolName: string;
-  personName: string;
-  role: string;
-  subjectName: string | null;
-  className: string | null;
-  email: string | null;
-};
-
-/** Who a code is for, or null if no such code. Works before signing in. */
-export async function lookUpCode(code: string): Promise<CodeInfo | null> {
-  const { data, error } = await supabase.rpc('peek_code', { p_code: code });
-  if (error) throw error;
-  const r = data?.[0];
-  if (!r) return null;
-  const info: CodeInfo = {
-    code,
-    kind: r.kind === 'student' ? 'student' : 'staff',
-    schoolName: r.school_name,
-    personName: r.person_name,
-    role: r.role,
-    subjectName: r.subject_name,
-    className: r.class_name,
-    email: r.email,
-  };
-  codeCache.set(code, info);
-  return info;
-}
-
-/** The last looked-up details of a code, if this screen session has them. */
-export function cachedCode(code: string): CodeInfo | null {
-  return codeCache.get(code) ?? null;
-}
-
-/** "Head of department · Maths", "Teacher", "Student · JSS1A". */
-export function describeCode(c: CodeInfo): string {
-  if (c.kind === 'student') return `Student${c.className ? ` · ${c.className}` : ''}`;
-  if (c.role === 'admin') return 'Head of school';
-  if (c.role === 'hod') return `Head of department${c.subjectName ? ` · ${c.subjectName}` : ''}`;
-  return 'Teacher';
-}
-
-const PENDING_KEY = 'zelvo.pendingCode';
-const codeCache = new Map<string, CodeInfo>();
-
-/** Remember a code to use as soon as the new account is signed in (it survives the app closing). */
-export async function rememberCode(code: string, kind: CodeInfo['kind']) {
-  await AsyncStorage.setItem(PENDING_KEY, JSON.stringify({ code, kind }));
-}
-
-export async function forgetCode() {
-  await AsyncStorage.removeItem(PENDING_KEY);
-}
-
-/** Uses a remembered code, if any. Called once the account is signed in, before the app decides where to go. */
-export async function redeemPendingCode() {
-  const raw = await AsyncStorage.getItem(PENDING_KEY);
-  if (!raw) return;
-  await forgetCode();
-  try {
-    const { code, kind } = JSON.parse(raw) as { code: string; kind: CodeInfo['kind'] };
-    const res =
-      kind === 'student'
-        ? await supabase.rpc('join_as_student', { p_code: code })
-        : await supabase.rpc('join_school', { p_code: code });
-    if (res.error) throw res.error;
-  } catch (e) {
-    Alert.alert("Your join code couldn't be used", friendlyError(e));
-  }
-}
-
-// ---------- What the person said they're here to do ----------
-
-export type Intent = 'school' | 'student';
-let intent: Intent | null = null;
-
-export function setIntent(i: Intent | null) {
-  intent = i;
-}
-
-export function takeIntent(): Intent | null {
-  const i = intent;
-  intent = null;
-  return i;
-}
 
 // ---------- Google ----------
 
@@ -190,4 +96,8 @@ export function suggestEmail(email: string): string | null {
 
 export function cleanEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+export function looksLikeEmail(s: string): boolean {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.trim());
 }

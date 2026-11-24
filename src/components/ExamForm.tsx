@@ -67,7 +67,7 @@ export function ExamForm({
         <EmptyState
           icon="alert-circle-outline"
           title={`No ${missing} yet`}
-          text={isAdmin ? `Add your school's ${missing} first, then come back to create the exam.` : `Ask your school admin to add ${missing} first.`}
+          text={isAdmin ? `Add your school's ${missing} first, then come back to create the exam.` : `Ask your vice-principal academic to add ${missing} first.`}
           action={
             isAdmin ? (
               <Button

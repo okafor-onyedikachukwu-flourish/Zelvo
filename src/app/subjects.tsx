@@ -52,7 +52,7 @@ export default function Subjects() {
     attempt(async () => {
       if (!editing) return;
       const name = editing.name.trim();
-      if (!name) throw new Error('Enter a subject name.');
+      if (!name) throw new Error('Enter a department name.');
       must(await supabase.from('subjects').update({ name }).eq('id', editing.id).select('id').single());
       setEditing(null);
       await reload();
@@ -76,7 +76,8 @@ export default function Subjects() {
         <>
           <AddNamesBox placeholder="e.g. Mathematics, English, Biology" onAdd={add} />
           <Text style={{ fontSize: 12, color: colors.muted, marginTop: space.xs }}>
-            Add several at once by separating them with commas.
+            Each department is one subject. Add several at once by separating them with commas. Heads of department and
+            teachers choose from this list when they join.
           </Text>
         </>
       ) : null}
@@ -84,12 +85,12 @@ export default function Subjects() {
       {subjects.length === 0 ? (
         <EmptyState
           icon="book-outline"
-          title="No subjects yet"
-          text={isAdmin ? 'Add the subjects taught in your school.' : 'Your school admin hasn’t added subjects yet.'}
+          title="No departments yet"
+          text={isAdmin ? 'Add the departments (subjects) taught in your school.' : 'Your vice-principal academic hasn’t added departments yet.'}
         />
       ) : (
         <>
-          <SectionTitle>{`${subjects.length} ${subjects.length === 1 ? 'subject' : 'subjects'}`}</SectionTitle>
+          <SectionTitle>{`${subjects.length} ${subjects.length === 1 ? 'department' : 'departments'}`}</SectionTitle>
           <Group>
             {subjects.map((s) =>
               editing?.id === s.id ? (

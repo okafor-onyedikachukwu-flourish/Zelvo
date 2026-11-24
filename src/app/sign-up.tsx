@@ -1,65 +1,17 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Text, type TextInputInstance } from 'react-native';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
+import { type TextInputInstance } from 'react-native';
 import { EmailCodeStep, EmailHint, GoogleButton, PasswordInput } from '../components/AuthParts';
-import { colors, space } from '../components/theme';
-import { Banner, Button, Card, Field, Input, LoadingView, Screen } from '../components/ui';
+import { space } from '../components/theme';
+import { Banner, Button, Field, Input, Screen } from '../components/ui';
 import { friendlyError } from '../lib/errors';
-import { looksLikeEmail } from '../lib/invites';
-import {
-  cachedCode,
-  cleanEmail,
-  describeCode,
-  forgetCode,
-  lookUpCode,
-  rememberCode,
-  setIntent,
-  suggestEmail,
-  type CodeInfo,
-  type Intent,
-} from '../lib/signup';
+import { cleanEmail, looksLikeEmail, suggestEmail } from '../lib/signup';
 import { supabase } from '../lib/supabase';
 
+/** The sign-up form. Once the account exists, the app asks "Who are you?". */
 export default function SignUp() {
-  const params = useLocalSearchParams<{ code?: string; intent?: string }>();
-  const code = params.code ?? '';
-  const [info, setInfo] = useState<CodeInfo | null>(() => (code ? cachedCode(code) : null));
-  const [lookupError, setLookupError] = useState<string | null>(null);
-
-  // Opened with a code but its details aren't loaded yet (e.g. after the app restarted).
-  useEffect(() => {
-    if (!code || info) return;
-    let active = true;
-    lookUpCode(code)
-      .then((found) => {
-        if (!active) return;
-        if (found) setInfo(found);
-        else setLookupError('That code is no longer valid. Ask for a new one.');
-      })
-      .catch((e) => active && setLookupError(friendlyError(e)));
-    return () => {
-      active = false;
-    };
-  }, [code, info]);
-
-  if (code && !info) {
-    return lookupError ? (
-      <Screen>
-        <Banner tone="danger" icon="alert-circle" title={lookupError} />
-        <Button title="Back" onPress={() => router.back()} />
-      </Screen>
-    ) : (
-      <LoadingView />
-    );
-  }
-  const intent: Intent | null = params.intent === 'school' || params.intent === 'student' ? params.intent : null;
-  return <SignUpForm info={info} intent={intent} />;
-}
-
-function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | null }) {
-  const lockedEmail = info?.email ?? null;
-  const [name, setName] = useState(info?.personName ?? '');
-  const [email, setEmail] = useState(lockedEmail ?? '');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,17 +19,6 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
   const [confirming, setConfirming] = useState(false);
   const emailRef = useRef<TextInputInstance>(null);
   const passwordRef = useRef<TextInputInstance>(null);
-  const suggestion = lockedEmail ? null : suggestEmail(email);
-
-  // Remember what to do once the account exists: use the code, or open "set up a school" / "find my school".
-  async function prepare() {
-    setIntent(intent);
-    if (info) await rememberCode(info.code, info.kind);
-  }
-  async function undo() {
-    setIntent(null);
-    await forgetCode();
-  }
 
   async function submit() {
     setExists(false);
@@ -88,7 +29,6 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
     setBusy(true);
     setError(null);
     try {
-      await prepare();
       const { data, error: err } = await supabase.auth.signUp({
         email: mail,
         password,
@@ -97,9 +37,8 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
       if (err) throw err;
       // With "Confirm email" on, there's no session until the emailed code is entered.
       if (!data.session) setConfirming(true);
-      // Otherwise the app moves on by itself.
+      // Otherwise the app moves on by itself to "Who are you?".
     } catch (e) {
-      await undo();
       const msg = friendlyError(e);
       setExists(/already exists/i.test(msg));
       setError(msg);
@@ -122,18 +61,10 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
     );
   }
 
-  const goToLogIn = () =>
-    router.replace({ pathname: '/sign-in', params: { email: cleanEmail(email), ...(info ? { code: info.code } : {}) } });
+  const goToLogIn = () => router.replace({ pathname: '/sign-in', params: { email: cleanEmail(email) } });
 
   return (
     <Screen>
-      {info ? (
-        <Card style={{ gap: 4, marginBottom: space.lg }}>
-          <Text style={{ fontSize: 14, color: colors.muted }}>You&apos;re joining</Text>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>{info.schoolName}</Text>
-          <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '600' }}>{describeCode(info)}</Text>
-        </Card>
-      ) : null}
       {error ? (
         <Banner
           tone="danger"
@@ -143,9 +74,9 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
         />
       ) : null}
 
-      <GoogleButton beforeStart={prepare} onCancel={undo} onError={setError} />
+      <GoogleButton onError={setError} />
 
-      <Field label="Full name" hint={info ? 'As your school wrote it. You can correct it.' : 'The name your school knows you by.'}>
+      <Field label="Full name" hint="The name your school knows you by.">
         <Input
           value={name}
           onChangeText={setName}
@@ -153,18 +84,14 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
           autoComplete="name"
           autoCapitalize="words"
           returnKeyType="next"
-          onSubmitEditing={() => (lockedEmail ? passwordRef : emailRef).current?.focus()}
+          onSubmitEditing={() => emailRef.current?.focus()}
         />
       </Field>
-      <Field
-        label="Email"
-        hint={lockedEmail ? 'Your code only works with this email. Wrong email? Ask whoever sent the code to change it.' : undefined}
-      >
+      <Field label="Email">
         <Input
           ref={emailRef}
           value={email}
           onChangeText={setEmail}
-          editable={!lockedEmail}
           placeholder="name@gmail.com"
           autoCapitalize="none"
           autoCorrect={false}
@@ -172,10 +99,9 @@ function SignUpForm({ info, intent }: { info: CodeInfo | null; intent: Intent | 
           keyboardType="email-address"
           returnKeyType="next"
           onSubmitEditing={() => passwordRef.current?.focus()}
-          style={lockedEmail ? { color: colors.muted } : undefined}
         />
       </Field>
-      <EmailHint suggestion={suggestion} onAccept={setEmail} />
+      <EmailHint suggestion={suggestEmail(email)} onAccept={setEmail} />
       <Field label="Password" hint="At least 6 characters. Tap the eye to check what you typed.">
         <PasswordInput
           ref={passwordRef}

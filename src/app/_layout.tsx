@@ -24,7 +24,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { session, loading: authLoading } = useAuth();
-  const { loading, current, error, refresh, studentAccounts, isOwner } = useSchool();
+  const { loading, current, error, refresh, studentAccounts, staffRequests, isOwner } = useSchool();
   const userId = session?.user.id;
 
   // Send scans saved offline whenever the app opens or comes back to the front.
@@ -43,8 +43,10 @@ function RootNavigator() {
   const signedIn = !!session;
   const hasSchool = signedIn && !!current;
   // Staff come first: an account that works at a school always sees the staff app.
-  const isStudent = signedIn && !hasSchool && studentAccounts.some((a) => a.status === 'approved');
-  const isWaiting = signedIn && !hasSchool && !isStudent && studentAccounts.length > 0;
+  // Students go straight to their dashboard, even before a teacher confirms them.
+  const isStudent = signedIn && !hasSchool && studentAccounts.length > 0;
+  // Staff (and the vice-principal) wait for the principal to approve them.
+  const isStaffWaiting = signedIn && !hasSchool && !isStudent && staffRequests.length > 0;
 
   return (
     <Stack
@@ -60,19 +62,18 @@ function RootNavigator() {
         <Stack.Screen name="start" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="sign-up" options={{ title: 'Create account' }} />
-        <Stack.Screen name="code" options={{ title: 'Join with a code' }} />
       </Stack.Protected>
 
       {/* Open whether or not someone is logged in. */}
       <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
       <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
 
-      <Stack.Protected guard={signedIn && !hasSchool && !isStudent && !isWaiting}>
+      <Stack.Protected guard={signedIn && !hasSchool && !isStudent && !isStaffWaiting}>
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={isWaiting}>
-        <Stack.Screen name="student/waiting" options={{ headerShown: false }} />
+      <Stack.Protected guard={isStaffWaiting}>
+        <Stack.Screen name="staff-waiting" options={{ headerShown: false }} />
       </Stack.Protected>
 
       <Stack.Protected guard={isStudent}>
@@ -81,9 +82,11 @@ function RootNavigator() {
       </Stack.Protected>
 
       <Stack.Protected guard={signedIn}>
-        <Stack.Screen name="create-school" options={{ title: 'Set up a school' }} />
-        <Stack.Screen name="join-school" options={{ title: 'Join a school' }} />
-        <Stack.Screen name="student/join" options={{ title: 'Join as a student' }} />
+        <Stack.Screen name="join/head" options={{ title: 'Head of school' }} />
+        <Stack.Screen name="join/staff" options={{ title: 'Staff' }} />
+        <Stack.Screen name="join/school" options={{ title: 'Join your school' }} />
+        <Stack.Screen name="create-school" options={{ title: 'Set up your school' }} />
+        <Stack.Screen name="student/join" options={{ title: 'Student' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={signedIn && isOwner}>
@@ -94,14 +97,12 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="school-details" options={{ title: 'School details' }} />
         <Stack.Screen name="staff/index" options={{ title: 'Staff' }} />
-        <Stack.Screen name="staff/add" options={{ title: 'Add staff', presentation: 'modal' }} />
         <Stack.Screen name="staff/[id]" options={{ title: 'Staff member' }} />
         <Stack.Screen name="classes/index" options={{ title: 'Classes' }} />
         <Stack.Screen name="classes/[id]" options={{ title: 'Class' }} />
         <Stack.Screen name="classes/import" options={{ title: 'Add students', presentation: 'modal' }} />
-        <Stack.Screen name="students/[id]" options={{ title: 'Student' }} />
-        <Stack.Screen name="subjects" options={{ title: 'Subjects' }} />
-        <Stack.Screen name="student-requests" options={{ title: 'Student accounts' }} />
+        <Stack.Screen name="subjects" options={{ title: 'Departments' }} />
+        <Stack.Screen name="student-requests" options={{ title: 'Students on Zelvo' }} />
         <Stack.Screen name="performance" options={{ title: 'Performance' }} />
         <Stack.Screen name="exams/new" options={{ title: 'New exam', presentation: 'modal' }} />
         <Stack.Screen name="exams/[id]/index" options={{ title: 'Exam' }} />

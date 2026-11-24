@@ -46,7 +46,7 @@ export default function CreateSchool() {
       <Field label="School name">
         <Input value={schoolName} onChangeText={setSchoolName} placeholder="e.g. Unity Secondary School" />
       </Field>
-      <Field label="Your name" hint="This is how staff will see you. You'll be the school's admin.">
+      <Field label="Your name" hint="This is how staff will see you. You'll be the school's principal: you approve staff and see every result.">
         <Input value={yourName} onChangeText={setYourName} placeholder="e.g. Ngozi Okafor" />
       </Field>
       <Field label="Country (optional)">

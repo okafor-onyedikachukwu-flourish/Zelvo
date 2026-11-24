@@ -45,19 +45,8 @@ export function EmailHint({ suggestion, onAccept }: { suggestion: string | null;
   );
 }
 
-/**
- * "Continue with Google", shown only once Google sign-in is switched on in Supabase.
- * beforeStart runs first (e.g. to remember a join code); onCancel runs if the person backs out.
- */
-export function GoogleButton({
-  beforeStart,
-  onCancel,
-  onError,
-}: {
-  beforeStart?: () => Promise<void>;
-  onCancel?: () => Promise<void>;
-  onError: (message: string) => void;
-}) {
+/** "Continue with Google", shown only once Google sign-in is switched on in Supabase. */
+export function GoogleButton({ onError }: { onError: (message: string) => void }) {
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -76,12 +65,9 @@ export function GoogleButton({
   async function start() {
     setBusy(true);
     try {
-      await beforeStart?.();
-      const done = await signInWithGoogle();
-      if (!done) await onCancel?.();
-      // When it works, the app moves on by itself.
+      await signInWithGoogle();
+      // When it works, the app moves on by itself; if the person closed Google, nothing happens.
     } catch (e) {
-      await onCancel?.();
       onError(friendlyError(e));
     } finally {
       setBusy(false);

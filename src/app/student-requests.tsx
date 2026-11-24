@@ -41,6 +41,7 @@ export default function StudentRequests() {
   const nameOf = new Map(students.map((s) => [s.id, s.full_name]));
 
   const bestMatch = (r: (typeof requests)[number]) =>
+    (r.student_id && !linked.has(r.student_id) ? students.find((s) => s.id === r.student_id) : undefined) ??
     students.find((s) => s.class_id === r.class_id && !linked.has(s.id) && words(s.full_name) === words(r.typed_name)) ??
     students.find((s) => !linked.has(s.id) && words(s.full_name) === words(r.typed_name));
 
@@ -61,10 +62,7 @@ export default function StudentRequests() {
     setBusy(r.id);
     setMessage(null);
     try {
-      const s = must(
-        await supabase.from('students').insert({ school_id: schoolId, class_id: r.class_id, full_name: r.typed_name }).select('id').single(),
-      );
-      must(await supabase.rpc('decide_student_access', { p_request: r.id, p_student: s.id, p_approve: true }));
+      must(await supabase.rpc('confirm_new_student', { p_request: r.id }));
       await reload();
     } catch (e) {
       setMessage(friendlyError(e));
@@ -75,7 +73,7 @@ export default function StudentRequests() {
 
   async function unlink(r: (typeof requests)[number]) {
     const who = nameOf.get(r.student_id ?? '') ?? r.typed_name;
-    if (!(await confirm(`Remove ${who}'s account?`, 'They will no longer see their results. They can ask to join again.', 'Remove'))) return;
+    if (!(await confirm(`Remove ${who}'s account?`, 'They will no longer see their results. They can join again.', 'Remove'))) return;
     try {
       must(await supabase.from('student_accounts').delete().eq('id', r.id));
       await reload();
@@ -90,13 +88,13 @@ export default function StudentRequests() {
     <Screen refreshing={refreshing} onRefresh={refresh}>
       {message ? <Banner tone="danger" icon="alert-circle" title={message} /> : null}
       <Text style={{ fontSize: 14, color: colors.muted, marginBottom: space.sm }}>
-        Students sign up in Zelvo and ask to join your school. Approve them and match them to their name on the class list.
-        They then see their released results.
+        Students join from their own phones and go straight to their dashboard. Confirm each one here, matched to their
+        name on the class list, and their released scores appear for them.
       </Text>
 
-      <SectionTitle>{`Waiting for approval (${pending.length})`}</SectionTitle>
+      <SectionTitle>{`Waiting for a teacher to confirm (${pending.length})`}</SectionTitle>
       {pending.length === 0 ? (
-        <EmptyState icon="person-add-outline" title="No requests" text="New requests from students appear here." />
+        <EmptyState icon="person-add-outline" title="Nobody waiting" text="Students who join your school appear here for you to confirm." />
       ) : (
         pending.map((r) => {
           const match = bestMatch(r);
@@ -110,10 +108,10 @@ export default function StudentRequests() {
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-                {match ? <Button small icon="checkmark" title="Approve" onPress={() => decide(r.id, match.id, true)} loading={busy === r.id} /> : null}
+                {match ? <Button small icon="checkmark" title="Confirm" onPress={() => decide(r.id, match.id, true)} loading={busy === r.id} /> : null}
                 <Button small variant="secondary" icon="list-outline" title={match ? 'Different name' : 'Choose name'} onPress={() => setPicking(r.id)} />
-                {!match && isAdmin ? (
-                  <Button small variant="secondary" icon="person-add-outline" title="Add to list & approve" onPress={() => addAndApprove(r)} loading={busy === r.id} />
+                {!match ? (
+                  <Button small variant="secondary" icon="person-add-outline" title="Add to list & confirm" onPress={() => addAndApprove(r)} loading={busy === r.id} />
                 ) : null}
                 <Button small variant="danger" title="Decline" onPress={() => decide(r.id, null, false)} />
               </View>
@@ -124,7 +122,7 @@ export default function StudentRequests() {
 
       {approved.length > 0 ? (
         <>
-          <SectionTitle>{`Approved (${approved.length})`}</SectionTitle>
+          <SectionTitle>{`Confirmed (${approved.length})`}</SectionTitle>
           <Group>
             {approved.map((r) => (
               <ListRow

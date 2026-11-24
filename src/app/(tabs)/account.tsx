@@ -54,7 +54,7 @@ export default function Account() {
             key={m.school.id}
             icon="business-outline"
             title={m.school.name}
-            subtitle={roleLabel(m.role)}
+            subtitle={roleLabel(m.role, null, m.headTitle)}
             right={
               m.school.id === current?.school.id ? (
                 <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
@@ -66,9 +66,9 @@ export default function Account() {
       </Group>
       <Button
         variant="secondary"
-        icon="key-outline"
+        icon="enter-outline"
         title="Join another school"
-        onPress={() => router.push('/join-school')}
+        onPress={() => router.push('/join/staff')}
         style={{ marginTop: space.md }}
       />
       <Button

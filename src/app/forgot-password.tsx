@@ -5,8 +5,7 @@ import { EmailCodeStep, EmailHint, PasswordInput } from '../components/AuthParts
 import { colors, space } from '../components/theme';
 import { Banner, Button, Field, Input, Screen } from '../components/ui';
 import { friendlyError } from '../lib/errors';
-import { looksLikeEmail } from '../lib/invites';
-import { cleanEmail, suggestEmail } from '../lib/signup';
+import { cleanEmail, looksLikeEmail, suggestEmail } from '../lib/signup';
 import { supabase } from '../lib/supabase';
 
 /**

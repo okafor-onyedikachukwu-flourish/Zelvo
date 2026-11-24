@@ -58,7 +58,7 @@ export default function Classes() {
         <EmptyState
           icon="people-outline"
           title="No classes yet"
-          text={isAdmin ? 'Add the classes in your school, such as JSS1A or Grade 7 Blue.' : 'Your school admin hasn’t added classes yet.'}
+          text={isAdmin ? 'Add the classes in your school, such as JSS1A or Grade 7 Blue.' : 'Your principal or vice-principal hasn’t added classes yet.'}
         />
       ) : (
         <>

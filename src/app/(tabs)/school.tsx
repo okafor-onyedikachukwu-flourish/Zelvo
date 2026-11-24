@@ -6,14 +6,13 @@ import { useLoad } from '../../lib/useLoad';
 
 async function load(schoolId: string) {
   const [staff, classes, subjects, accounts] = await Promise.all([
-    supabase.from('staff').select('user_id').eq('school_id', schoolId).then(must),
+    supabase.from('staff').select('user_id').eq('school_id', schoolId).not('user_id', 'is', null).then(must),
     supabase.from('classes').select('id').eq('school_id', schoolId).then(must),
     supabase.from('subjects').select('id').eq('school_id', schoolId).then(must),
     supabase.from('student_accounts').select('status').eq('school_id', schoolId).then(must),
   ]);
   return {
     staff: staff.length,
-    waiting: staff.filter((s) => !s.user_id).length,
     classes: classes.length,
     subjects: subjects.length,
     pending: accounts.filter((a) => a.status === 'pending').length,
@@ -32,7 +31,7 @@ export default function SchoolTab() {
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       {!isAdmin ? (
-        <Banner tone="info" icon="eye-outline" title="View only" text="Only school admins can change these." />
+        <Banner tone="info" icon="eye-outline" title="View only" text="Only the principal or vice-principal can change these." />
       ) : null}
       <Group>
         <ListRow
@@ -48,15 +47,15 @@ export default function SchoolTab() {
         <ListRow
           icon="id-card-outline"
           title="Staff"
-          subtitle={c.waiting > 0 ? `${c.staff} people, ${c.waiting} not joined yet` : `${c.staff} people`}
+          subtitle={`${c.staff} ${c.staff === 1 ? 'person' : 'people'}`}
           onPress={() => router.push('/staff')}
         />
         <ListRow icon="people-outline" title="Classes and students" subtitle={`${c.classes} classes`} onPress={() => router.push('/classes')} />
-        <ListRow icon="book-outline" title="Subjects" subtitle={`${c.subjects} subjects`} onPress={() => router.push('/subjects')} />
+        <ListRow icon="book-outline" title="Departments" subtitle={`${c.subjects} departments`} onPress={() => router.push('/subjects')} />
         <ListRow
           icon="school-outline"
-          title="Student accounts"
-          subtitle={c.pending > 0 ? `${c.pending} waiting for approval · ${c.students} approved` : `${c.students} approved`}
+          title="Students on Zelvo"
+          subtitle={c.pending > 0 ? `${c.pending} waiting for a teacher · ${c.students} confirmed` : `${c.students} confirmed`}
           right={c.pending > 0 ? <Badge label={String(c.pending)} tone="warning" /> : undefined}
           onPress={() => router.push('/student-requests')}
         />

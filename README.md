@@ -9,7 +9,7 @@ No payments.
 
 ## Build stages
 
-1. **Done:** accounts, schools, staff with join codes, classes, subjects and optional class lists
+1. **Done:** accounts, schools, staff who join and are approved, classes, departments and optional class lists
 2. **Done:** exams and answer keys, plus the printable answer sheet (PDF)
 3. **Done:** scanning on the phone (works offline), a review screen for unclear answers, and results with export
 4. Timetable: bell times, timetable upload, clash checks and the teacher screens
@@ -20,7 +20,7 @@ No payments.
 ## How stage 1 works
 
 - Anyone can create an account, then either **set up a school** (they become its admin) or **join with a code**.
-- The admin adds staff. Each person gets their own 8-character join code (e.g. `AB3D-EF7H`) to share on WhatsApp or SMS. A code works once and can be replaced.
+- Staff join from their own phones by choosing their school and position; the principal or vice-principal approves them.
 - Admins manage classes, subjects and optional class lists (pasted or from a CSV file). Teachers can view them.
 - Each school's data is kept separate by the database's security rules. A person can belong to more than one school and switch between them.
 - A school always keeps at least one admin.
@@ -43,45 +43,28 @@ No payments.
 
 ## Roles
 
-Everyone signs up with their own email. The role comes from the school, not from the email address:
+Everyone signs up with their own email (or Google). Right after signing up, Zelvo asks **Who are you?**
 
-| Role | How they get it | What they can do |
+| Choice | Then | What they can do |
 | --- | --- | --- |
-| **Owner of Zelvo** | Listed in `platform_admins` (flourishokafor13@gmail.com) | Dashboard of every school using Zelvo: counts only, no scores or names |
-| **Head of school** | Sets up the school, or is made head of school by another head | Sets up classes, subjects, staff and class lists; sees every exam and the school's performance class by class |
-| **Head of department** | Added by the head with a join code, for one subject (each subject has only one) | A teacher who also sees their subject's results in every class (view only); will enter the timetable (stage 4) |
-| **Teacher** | Added by the head with a join code | Creates their own exams, prints sheets, scans and marks scripts |
-| **Student** | Uses the code a teacher emailed them (joins straight away), or asks to join a school and class and a teacher or head approves | Views their released results and corrections; can't change anything |
+| **Head of school → Principal** | Sets up the school (one principal per school) | Everything: classes, departments, staff approvals, every exam, performance class by class |
+| **Head of school → Vice-principal academic** | Finds the school and asks to join; the principal approves (one per school) | Same as the principal; adds the departments and subjects |
+| **Staff → Head of department** | Finds the school, selects their department, asks to join; the principal or vice-principal approves | A teacher who also sees their department's results in every class; will enter the timetable (stage 4) |
+| **Staff → Teacher** | Finds the school, selects the subjects they teach, asks to join; approved the same way | Creates their own exams, prints sheets, scans and marks scripts |
+| **Student** | Finds the school, picks their class, types their name, and goes straight to their dashboard | Sees released results once a teacher confirms them (**School → Students on Zelvo**) |
+| **Owner of Zelvo** | Listed in `platform_admins` (flourishokafor13@gmail.com) | Dashboard of every school: counts only, no scores or names |
 
-Only an exam's creator or the head of school can change an exam or its scripts. Students see results only after the teacher switches on **Students can see results**.
-
-### Sending join codes by email
-
-When adding a teacher or head of department, the head of school can type the person's own email (for example their Gmail).
-"Send to their email" opens the phone's email app with the code and instructions ready; the head just taps Send.
-A code with an email attached only works for an account made with that email, so a forwarded code is useless to anyone else.
-The email can be added or changed later on the person's page, and it is kept when a new code is made.
-
-### Codes
-
-- Every code is 8 letters and numbers, shown as `AB3D-EF7H`, without look-alikes (no 0/O, 1/I).
-- No two codes are the same anywhere in Zelvo (staff or student, any school).
-- A code doesn't contain the role. It points to the record the head of school filled in (name, role, subject, or a name on a class list), and the person's account is linked to that record when they use it. The code is then deleted.
-- Each subject can have up to 2 heads of department in a school. A subject that already has 2 is greyed out when choosing a head of department.
-
-### Student codes
-
-On a class list, tap a student and type their email (e.g. Gmail). "Send code to their email" opens the email app with their own code and the download link.
-The code only works for an account made with that email and joins the student straight away, linked to their name. Any member of staff can send student codes.
-Students without a code can still ask to join and be approved under **School → Student accounts**.
+- Each department is one subject. A department can have up to 2 heads.
+- Staff waiting for approval see a "Waiting for approval" screen; the principal and vice-principal see requests on **Staff** and on Home.
+- A student's typed name is matched to the class list (any order or capitals). If it isn't on the list, the teacher taps **Add to list & confirm**.
+- Only an exam's creator or a head of school can change an exam or its scripts. Students see results only after the teacher switches on **Students can see results**.
 
 ## Signing up and logging in
 
-- The first screen asks how the person is joining: **I have a join code**, **I'm setting up a school**, or **I'm a student without a code**. Returning people tap **Log in**.
-- **With a code**, Zelvo shows who the code is for (name, role or class, school) before an account is made. The sign-up form is filled in with their name and, if the code is locked to an email, that email. The code is used automatically as soon as the account exists.
+- The first screen shows what Zelvo does, with **Create an account** and **Log in**.
 - **Continue with Google** appears once Google sign-in is switched on in Supabase (Authentication → Providers → Google). Google sends people back to `zelvo://auth-callback`, which must be in Authentication → URL Configuration → Redirect URLs (`zelvo://**`).
 - Password boxes have an eye button; common email typos (e.g. `gmial.com`) are pointed out.
-- **Forgot password?** emails a code (not a link). The Supabase "Reset password" email template must include `{{ .Token }}`, and real emails need custom SMTP (e.g. Brevo), because Supabase's built-in email only reaches the project's own team.
+- **Forgot password?** emails a code (not a link). The Supabase "Reset password" email template must include `{{ .Token }}`, and real emails need custom SMTP, because Supabase's built-in email only reaches the project's own team.
 - If **Confirm email** is switched on, new accounts get a code by email to enter in the app (the "Confirm signup" template must include `{{ .Token }}`).
 
 ## Updates inside the app
@@ -100,7 +83,8 @@ src/app/                       Screens (Expo Router)
   (tabs)/exams.tsx             Exams: your exams (admins also see everyone's)
   (tabs)/school.tsx            School: details, staff, classes, subjects
   (tabs)/account.tsx           Account: switch school, join another, log out
-  staff/                       Staff list, add staff, staff member (join code, role)
+  staff/                       Staff list with join requests, staff member (position)
+  join/                        "Who are you?" steps: head of school, staff, choose school
   classes/                     Class list, class detail, add students (paste or CSV)
   subjects.tsx, school-details.tsx
   exams/                       New exam, exam detail, edit, answer key, answer sheets,
@@ -110,7 +94,6 @@ src/lib/
   supabase.ts, config.ts       Supabase connection
   auth.tsx, school.tsx         Logged-in account and current school
   names.ts                     Reads name lists from pasted text or CSV
-  invites.ts                   Join code formatting and sharing
   exams.ts                     Answer key helpers
   sheet/layout.ts              Answer sheet measurements (shared with the scanner)
   sheet/render.ts              Draws the answer sheets as printable HTML/SVG
