@@ -13,8 +13,12 @@ const byName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
 
 async function load(schoolId: string) {
-  const rows = must(await supabase.from('classes').select('id, name, students(count)').eq('school_id', schoolId));
-  return rows.map((r) => ({ id: r.id, name: r.name, students: r.students[0]?.count ?? 0 })).sort(byName);
+  const [rows, counts] = await Promise.all([
+    supabase.from('classes').select('id, name').eq('school_id', schoolId).then(must),
+    supabase.rpc('class_student_counts', { p_school: schoolId }).then(must),
+  ]);
+  const byClass = new Map(counts.map((c) => [c.class_id, c.students]));
+  return rows.map((r) => ({ id: r.id, name: r.name, students: byClass.get(r.id) ?? 0 })).sort(byName);
 }
 
 export default function Classes() {

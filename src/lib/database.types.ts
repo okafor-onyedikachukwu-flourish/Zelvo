@@ -144,6 +144,10 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      class_student_counts: {
+        Args: { p_school: string };
+        Returns: { class_id: string; students: number }[];
+      };
       create_school: {
         Args: { p_admin_name: string; p_country?: string; p_name: string; p_timezone?: string };
         Returns: string;
