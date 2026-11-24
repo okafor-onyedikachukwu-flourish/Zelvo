@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAuth } from './auth';
 import { friendlyError } from './errors';
+import { redeemPendingCode } from './signup';
 import { supabase } from './supabase';
 
 /** 'admin' is the head of school; 'hod' is a head of department (one subject) who also teaches. */
@@ -88,6 +89,7 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
 
   const refresh = useCallback(async () => {
     if (!userId) return; // signed out: nothing to load
+    await redeemPendingCode(); // a join code typed before signing up
     const [staffRes, studentRes, ownerRes] = await Promise.all([
       supabase
         .from('staff')

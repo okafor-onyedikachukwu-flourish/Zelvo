@@ -1,17 +1,25 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, space } from '../components/theme';
-import { Brand, Button, Screen, type IconName } from '../components/ui';
+import { OptionCard as Option } from '../components/AuthParts';
+import { colors, space } from '../components/theme';
+import { Brand, Button, Screen } from '../components/ui';
 import { accountName, useAuth } from '../lib/auth';
 import { useSchool } from '../lib/school';
+import { takeIntent } from '../lib/signup';
 import { supabase } from '../lib/supabase';
 
 export default function Welcome() {
   const { session } = useAuth();
   const { isOwner } = useSchool();
   const firstName = accountName(session).split(' ')[0];
+
+  // Just signed up after choosing "I'm setting up a school" or "I'm a student": go straight there.
+  useEffect(() => {
+    const intent = takeIntent();
+    if (intent === 'school') router.push('/create-school');
+    else if (intent === 'student') router.push('/student/join');
+  }, []);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -43,42 +51,3 @@ export default function Welcome() {
     </SafeAreaView>
   );
 }
-
-function Option({ icon, title, text, onPress }: { icon: IconName; title: string; text: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.option, pressed && { opacity: 0.7 }]}>
-      <View style={styles.optionIcon}>
-        <Ionicons name={icon} size={26} color={colors.primary} />
-      </View>
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text style={styles.optionTitle}>{title}</Text>
-        <Text style={styles.optionText}>{text}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.faint} />
-    </Pressable>
-  );
-}
-
-const styles = StyleSheet.create({
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    padding: space.lg,
-    marginBottom: space.md,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  optionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
-  optionText: { fontSize: 14, color: colors.muted },
-});

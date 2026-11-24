@@ -57,9 +57,15 @@ function RootNavigator() {
       }}
     >
       <Stack.Protected guard={!signedIn}>
+        <Stack.Screen name="start" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="sign-up" options={{ title: 'Create account' }} />
+        <Stack.Screen name="code" options={{ title: 'Join with a code' }} />
       </Stack.Protected>
+
+      {/* Open whether or not someone is logged in. */}
+      <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
+      <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
 
       <Stack.Protected guard={signedIn && !hasSchool && !isStudent && !isWaiting}>
         <Stack.Screen name="welcome" options={{ headerShown: false }} />

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Children, Fragment, type ComponentProps, type ReactNode } from 'react';
+import { Children, Fragment, type ComponentProps, type ComponentPropsWithRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,7 +14,6 @@ import {
   TextInput,
   View,
   type StyleProp,
-  type TextInputProps,
   type ViewStyle,
 } from 'react-native';
 import { colors, radius, space } from './theme';
@@ -253,7 +252,8 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
   );
 }
 
-export function Input(props: TextInputProps) {
+/** Text box. Accepts a ref (React 19 passes it as a prop), e.g. to move to the next box. */
+export function Input(props: ComponentPropsWithRef<typeof TextInput>) {
   return <TextInput placeholderTextColor={colors.faint} {...props} style={[styles.input, props.style]} />;
 }
 

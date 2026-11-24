@@ -47,7 +47,8 @@
           "photosPermission": "Zelvo opens the photos of answer sheets that you choose.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "owner": "okafor_onyedikachukwu_flourish01",
     "extra": {

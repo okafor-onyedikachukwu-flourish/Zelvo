@@ -404,6 +404,18 @@ export type Database = {
           status: string;
         }[];
       };
+      peek_code: {
+        Args: { p_code: string };
+        Returns: {
+          kind: string;
+          school_name: string;
+          person_name: string;
+          role: string;
+          subject_name: string | null;
+          class_name: string | null;
+          email: string | null;
+        }[];
+      };
       platform_overview: {
         Args: Record<string, never>;
         Returns: {

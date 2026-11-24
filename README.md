@@ -75,6 +75,15 @@ On a class list, tap a student and type their email (e.g. Gmail). "Send code to 
 The code only works for an account made with that email and joins the student straight away, linked to their name. Any member of staff can send student codes.
 Students without a code can still ask to join and be approved under **School → Student accounts**.
 
+## Signing up and logging in
+
+- The first screen asks how the person is joining: **I have a join code**, **I'm setting up a school**, or **I'm a student without a code**. Returning people tap **Log in**.
+- **With a code**, Zelvo shows who the code is for (name, role or class, school) before an account is made. The sign-up form is filled in with their name and, if the code is locked to an email, that email. The code is used automatically as soon as the account exists.
+- **Continue with Google** appears once Google sign-in is switched on in Supabase (Authentication → Providers → Google). Google sends people back to `zelvo://auth-callback`, which must be in Authentication → URL Configuration → Redirect URLs (`zelvo://**`).
+- Password boxes have an eye button; common email typos (e.g. `gmial.com`) are pointed out.
+- **Forgot password?** emails a code (not a link). The Supabase "Reset password" email template must include `{{ .Token }}`, and real emails need custom SMTP (e.g. Brevo), because Supabase's built-in email only reaches the project's own team.
+- If **Confirm email** is switched on, new accounts get a code by email to enter in the app (the "Confirm signup" template must include `{{ .Token }}`).
+
 ## Updates inside the app
 
 Zelvo checks GitHub Releases for a newer build when it opens. If there is one, it shows **Update available → Update now**: one tap downloads the APK and opens Android's installer (Android always asks to confirm installs from outside the Play Store, and the first time it may ask to allow installs from Zelvo). **Account → Check for updates** does the same on demand.

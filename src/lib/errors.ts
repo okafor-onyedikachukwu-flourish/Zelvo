@@ -4,7 +4,6 @@ export function friendlyError(e: unknown): string {
   const msg = err.message ?? (typeof e === 'string' ? e : 'Something went wrong. Try again.');
   const code = err.code ?? '';
 
-  if (code === '23505' && /one_hod_per_subject/.test(msg)) return 'That subject already has a head of department.';
   if (code === '23505') return 'That name is already in use.';
   if (code === '23503') return "It's used by an exam, so it can't be deleted.";
   if (code === '42501' || /row-level security|permission denied/i.test(msg)) {
@@ -17,7 +16,18 @@ export function friendlyError(e: unknown): string {
     return 'Wrong email or password.';
   }
   if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg)) {
-    return 'Confirm your email first: open the link we sent you, then log in.';
+    return 'Confirm your email first: enter the code we emailed you.';
+  }
+  if (code === 'otp_expired' || /token has expired or is invalid/i.test(msg)) {
+    return 'That code is wrong or has expired. Check the latest email, or send a new code.';
+  }
+  if (code === 'same_password') return 'Choose a password different from your old one.';
+  if (code === 'weak_password') return 'Choose a stronger password: at least 6 characters.';
+  if (code === 'email_address_invalid' || /unable to validate email address|invalid format/i.test(msg)) {
+    return "That email address isn't valid. Check it and try again.";
+  }
+  if (code === 'provider_disabled' || /unsupported provider|provider is not enabled/i.test(msg)) {
+    return "Google sign-in isn't switched on yet. Use your email and password for now.";
   }
   if (code === 'user_already_exists' || /already registered/i.test(msg)) {
     return 'An account with this email already exists. Log in instead.';
