@@ -185,6 +185,7 @@ export type Database = {
           joined_at: string | null;
           role: string;
           school_id: string;
+          subject_id: string | null;
           user_id: string | null;
         };
         Insert: {
@@ -194,6 +195,7 @@ export type Database = {
           joined_at?: string | null;
           role?: string;
           school_id: string;
+          subject_id?: string | null;
           user_id?: string | null;
         };
         Update: {
@@ -203,9 +205,17 @@ export type Database = {
           joined_at?: string | null;
           role?: string;
           school_id?: string;
+          subject_id?: string | null;
           user_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'staff_subject_school_fkey';
+            columns: ['subject_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'subjects';
+            referencedColumns: ['id', 'school_id'];
+          },
           {
             foreignKeyName: 'staff_school_id_fkey';
             columns: ['school_id'];
@@ -337,6 +347,23 @@ export type Database = {
         Returns: string;
       };
       decide_student_access: { Args: { p_request: string; p_student: string | null; p_approve: boolean }; Returns: undefined };
+      exam_performance: {
+        Args: { p_school: string };
+        Returns: {
+          exam_id: string;
+          title: string;
+          exam_date: string | null;
+          created_at: string;
+          class_id: string;
+          class_name: string;
+          subject_id: string;
+          subject_name: string;
+          scripts: number;
+          average: number | null;
+          highest: number | null;
+          lowest: number | null;
+        }[];
+      };
       find_schools: { Args: { p_query: string }; Returns: { id: string; name: string; country: string | null }[] };
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
       join_school: { Args: { p_code: string }; Returns: string };

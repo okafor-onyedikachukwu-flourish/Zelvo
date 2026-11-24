@@ -5,6 +5,7 @@ import { colors, space } from '../../../components/theme';
 import { Banner, Button, Card, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle, confirm } from '../../../components/ui';
 import { friendlyError } from '../../../lib/errors';
 import { formatMarks, keyProgress, optionsLabel } from '../../../lib/exams';
+import { useCanManageExam } from '../../../lib/permissions';
 import { deleteExamImages } from '../../../lib/scan/queue';
 import { pageCount } from '../../../lib/sheet/layout';
 import { formatDate } from '../../../lib/sheet/render';
@@ -15,7 +16,7 @@ async function load(id: string) {
   return must(
     await supabase
       .from('exams')
-      .select('id, school_id, title, exam_date, question_count, option_count, mark_per_question, record_out_of, results_released, answer_key, classes(name), subjects(name)')
+      .select('id, school_id, created_by, title, exam_date, question_count, option_count, mark_per_question, record_out_of, results_released, answer_key, classes(name), subjects(name)')
       .eq('id', id)
       .single(),
   );
@@ -35,6 +36,7 @@ export default function ExamDetail() {
   const { data, loading, error, reload, refresh, refreshing } = useLoad(() => loadAll(id), id);
   const [message, setMessage] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
+  const canManage = useCanManageExam(data?.created_by);
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
@@ -85,7 +87,14 @@ export default function ExamDetail() {
         </Text>
       </Card>
 
-      <SectionTitle>Before the exam</SectionTitle>
+      {!canManage ? (
+        <View style={{ marginTop: space.md }}>
+          <Banner tone="info" icon="eye-outline" title="View only" text="Only the teacher who set this exam, or the head of school, can change it." />
+        </View>
+      ) : null}
+
+      {canManage ? <SectionTitle>Before the exam</SectionTitle> : null}
+      {canManage ? (
       <Group>
         <ListRow
           icon="key-outline"
@@ -101,15 +110,18 @@ export default function ExamDetail() {
           onPress={() => router.push({ pathname: '/exams/[id]/sheets', params: { id: exam.id } })}
         />
       </Group>
+      ) : null}
 
-      <SectionTitle>After the exam</SectionTitle>
+      <SectionTitle>{canManage ? 'After the exam' : 'Results'}</SectionTitle>
       <Group>
-        <ListRow
-          icon="scan-outline"
-          title="Scan scripts"
-          subtitle="Photograph the answer sheets; works without internet"
-          onPress={() => router.push({ pathname: '/exams/[id]/scan', params: { id: exam.id } })}
-        />
+        {canManage ? (
+          <ListRow
+            icon="scan-outline"
+            title="Scan scripts"
+            subtitle="Photograph the answer sheets; works without internet"
+            onPress={() => router.push({ pathname: '/exams/[id]/scan', params: { id: exam.id } })}
+          />
+        ) : null}
         <ListRow
           icon="stats-chart-outline"
           title="Results"
@@ -120,10 +132,18 @@ export default function ExamDetail() {
           icon="eye-outline"
           title="Students can see results"
           subtitle={exam.results_released ? 'On: students see their score and corrections' : 'Off: turn on after checking the scripts'}
-          right={<Switch value={exam.results_released} onValueChange={setReleased} disabled={releasing} trackColor={{ true: colors.primary }} />}
+          right={
+            <Switch
+              value={exam.results_released}
+              onValueChange={setReleased}
+              disabled={releasing || !canManage}
+              trackColor={{ true: colors.primary }}
+            />
+          }
         />
       </Group>
 
+      {canManage ? (
       <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.xl }}>
         <Button
           variant="secondary"
@@ -134,6 +154,7 @@ export default function ExamDetail() {
         />
         <Button variant="danger" icon="trash-outline" title="Delete" onPress={remove} style={{ flex: 1 }} />
       </View>
+      ) : null}
     </Screen>
   );
 }

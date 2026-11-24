@@ -4,11 +4,14 @@ import { useAuth } from './auth';
 import { friendlyError } from './errors';
 import { supabase } from './supabase';
 
-export type Role = 'admin' | 'teacher';
+/** 'admin' is the head of school; 'hod' is a head of department (one subject) who also teaches. */
+export type Role = 'admin' | 'hod' | 'teacher';
 
 export type Membership = {
   staffId: string;
   role: Role;
+  /** The subject a head of department is responsible for. */
+  subjectId: string | null;
   fullName: string;
   school: { id: string; name: string; country: string | null; timezone: string };
 };
@@ -32,7 +35,10 @@ type SchoolState = {
   error: string | null;
   memberships: Membership[];
   current: Membership | null;
+  /** Head of school. */
   isAdmin: boolean;
+  /** Head of department. */
+  isHod: boolean;
   /** This account's requests to join schools as a student. */
   studentAccounts: StudentAccount[];
   /** The owner of Zelvo (sees the dashboard of all schools). */
@@ -85,7 +91,7 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
     const [staffRes, studentRes, ownerRes] = await Promise.all([
       supabase
         .from('staff')
-        .select('id, role, full_name, schools(id, name, country, timezone)')
+        .select('id, role, full_name, subject_id, schools(id, name, country, timezone)')
         .eq('user_id', userId)
         .order('created_at'),
       supabase.rpc('my_student_accounts'),
@@ -99,7 +105,9 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
       const cached = await AsyncStorage.getItem(cacheKey(userId));
       if (cached) {
         const parsed = JSON.parse(cached) as Loaded | Membership[];
-        await apply(userId, Array.isArray(parsed) ? { memberships: parsed, studentAccounts: [], isOwner: false } : parsed);
+        const loaded = Array.isArray(parsed) ? { memberships: parsed, studentAccounts: [], isOwner: false } : parsed;
+        loaded.memberships = loaded.memberships.map((m) => ({ ...m, subjectId: m.subjectId ?? null }));
+        await apply(userId, loaded);
         setError(null);
       } else {
         setError(friendlyError(err));
@@ -112,7 +120,8 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
       .filter((r) => r.schools)
       .map((r) => ({
         staffId: r.id,
-        role: r.role === 'admin' ? 'admin' : 'teacher',
+        role: toRole(r.role),
+        subjectId: r.subject_id,
         fullName: r.full_name,
         school: r.schools,
       }));
@@ -158,6 +167,7 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
       memberships,
       current,
       isAdmin: current?.role === 'admin',
+      isHod: current?.role === 'hod',
       studentAccounts,
       isOwner,
       refresh,
@@ -176,11 +186,17 @@ export function useSchool(): SchoolState {
 
 /** The current school. Only use on screens that are shown once a school is chosen. */
 export function useCurrentSchool() {
-  const { current, isAdmin, refresh } = useSchool();
+  const { current, isAdmin, isHod, refresh } = useSchool();
   if (!current) throw new Error('No school selected');
-  return { ...current, schoolId: current.school.id, isAdmin, refresh };
+  return { ...current, schoolId: current.school.id, isAdmin, isHod, refresh };
 }
 
-export function roleLabel(role: string): string {
-  return role === 'admin' ? 'Main admin' : 'Teacher';
+export function toRole(role: string): Role {
+  return role === 'admin' || role === 'hod' ? role : 'teacher';
+}
+
+export function roleLabel(role: string, subjectName?: string | null): string {
+  if (role === 'admin') return 'Head of school';
+  if (role === 'hod') return subjectName ? `HOD ${subjectName}` : 'Head of department';
+  return 'Teacher';
 }

@@ -95,6 +95,7 @@ function RootNavigator() {
         <Stack.Screen name="classes/import" options={{ title: 'Add students', presentation: 'modal' }} />
         <Stack.Screen name="subjects" options={{ title: 'Subjects' }} />
         <Stack.Screen name="student-requests" options={{ title: 'Student accounts' }} />
+        <Stack.Screen name="performance" options={{ title: 'Performance' }} />
         <Stack.Screen name="exams/new" options={{ title: 'New exam', presentation: 'modal' }} />
         <Stack.Screen name="exams/[id]/index" options={{ title: 'Exam' }} />
         <Stack.Screen name="exams/[id]/edit" options={{ title: 'Edit exam' }} />

@@ -7,6 +7,7 @@ import { colors, radius, space } from '../../../../components/theme';
 import { Badge, Banner, Button, Card, ErrorView, LoadingView, Screen, SectionTitle, confirm } from '../../../../components/ui';
 import { friendlyError } from '../../../../lib/errors';
 import { FREE, UNSET, lettersFor } from '../../../../lib/exams';
+import { useCanManageExam } from '../../../../lib/permissions';
 import { deleteScriptImages, pageImageUrl } from '../../../../lib/scan/queue';
 import { describeAnswer, scoreScript } from '../../../../lib/scoring';
 import { gridShape } from '../../../../lib/sheet/layout';
@@ -18,7 +19,7 @@ async function load(examId: string, scriptId: string) {
     supabase.from('scripts').select('id, student_id, student_name, answers, pages_scanned').eq('id', scriptId).single().then(must),
     supabase
       .from('exams')
-      .select('id, school_id, question_count, option_count, answer_key, mark_per_question, record_out_of, class_id')
+      .select('id, school_id, created_by, question_count, option_count, answer_key, mark_per_question, record_out_of, class_id')
       .eq('id', examId)
       .single()
       .then(must),
@@ -55,6 +56,7 @@ function ScriptReview({ data, reload }: { data: Data; reload: () => Promise<void
   const [picking, setPicking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   // Show every answer straight away when there's nothing to check.
+  const canManage = useCanManageExam(exam.created_by);
   const [showAll, setShowAll] = useState(() => ![...script.answers].some((a) => a === '#' || (a >= 'a' && a <= 'f')));
 
   const letters = lettersFor(exam.option_count);
@@ -117,7 +119,7 @@ function ScriptReview({ data, reload }: { data: Data; reload: () => Promise<void
     const unsure = a === '#' || (a >= 'a' && a <= 'f');
     return (
       <View key={i} style={styles.question}>
-        <Pressable onPress={() => setEditing(editing === i ? null : i)} style={styles.questionRow}>
+        <Pressable onPress={canManage ? () => setEditing(editing === i ? null : i) : undefined} style={styles.questionRow}>
           <Text style={styles.qNumber}>{i + 1}</Text>
           <Text style={[styles.qAnswer, unsure && { color: colors.warning }]}>{describeAnswer(a)}</Text>
           <Text style={styles.qKey}>{k === UNSET ? 'no key' : k === FREE ? 'free mark' : `key ${k}`}</Text>
@@ -128,7 +130,7 @@ function ScriptReview({ data, reload }: { data: Data; reload: () => Promise<void
             <QuestionCrop uri={images[page]} indexOnPage={i % perPage} optionCount={exam.option_count} width={cropWidth} />
           </View>
         ) : null}
-        {editing === i || (withCrop && unsure) ? (
+        {canManage && (editing === i || (withCrop && unsure)) ? (
           <View style={styles.choices}>
             {letters.map((l) => (
               <Pressable key={l} onPress={() => setAnswer(i, l)} style={[styles.choice, a === l && styles.choiceOn]}>
@@ -159,13 +161,15 @@ function ScriptReview({ data, reload }: { data: Data; reload: () => Promise<void
           </Text>
         ) : null}
         {sc.missing > 0 ? <Text style={{ fontSize: 14, color: colors.warning }}>{sc.missing} questions are on a page that hasn&apos;t been scanned.</Text> : null}
-        <Button small variant="secondary" icon="person-outline" title="Change student" onPress={() => setPicking(true)} style={{ alignSelf: 'flex-start', marginTop: space.sm }} />
+        {canManage ? (
+          <Button small variant="secondary" icon="person-outline" title="Change student" onPress={() => setPicking(true)} style={{ alignSelf: 'flex-start', marginTop: space.sm }} />
+        ) : null}
       </Card>
 
       {flagged.length > 0 ? (
         <>
           <SectionTitle>{`To check (${flagged.length})`}</SectionTitle>
-          <Text style={styles.help}>Look at what the student shaded and tap the right answer.</Text>
+          <Text style={styles.help}>{canManage ? 'Look at what the student shaded and tap the right answer.' : 'The exam’s teacher will confirm these.'}</Text>
           {flagged.map(({ i }) => renderQuestion(i, true))}
         </>
       ) : null}
@@ -175,12 +179,12 @@ function ScriptReview({ data, reload }: { data: Data; reload: () => Promise<void
       </SectionTitle>
       {showAll ? (
         <>
-          <Text style={styles.help}>Tap a question to change its answer.</Text>
+          {canManage ? <Text style={styles.help}>Tap a question to change its answer.</Text> : null}
           {Array.from({ length: exam.question_count }, (_, i) => renderQuestion(i, editing === i))}
         </>
       ) : null}
 
-      <Button variant="danger" icon="trash-outline" title="Delete script" onPress={remove} style={{ marginTop: space.xl }} />
+      {canManage ? <Button variant="danger" icon="trash-outline" title="Delete script" onPress={remove} style={{ marginTop: space.xl }} /> : null}
 
       <StudentPicker
         visible={picking}

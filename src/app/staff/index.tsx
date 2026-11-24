@@ -4,13 +4,13 @@ import { Pressable } from 'react-native';
 import { colors } from '../../components/theme';
 import { Badge, EmptyState, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle } from '../../components/ui';
 import { formatCode } from '../../lib/invites';
-import { useCurrentSchool } from '../../lib/school';
+import { roleLabel, useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
 async function load(schoolId: string, isAdmin: boolean) {
   const [staff, invites] = await Promise.all([
-    supabase.from('staff').select('id, full_name, role, user_id').eq('school_id', schoolId).order('full_name').then(must),
+    supabase.from('staff').select('id, full_name, role, user_id, subjects(name)').eq('school_id', schoolId).order('full_name').then(must),
     isAdmin
       ? supabase.from('staff_invites').select('staff_id, code').eq('school_id', schoolId).then(must)
       : Promise.resolve([] as { staff_id: string; code: string }[]),
@@ -63,7 +63,7 @@ export default function StaffList() {
                 key={s.id}
                 title={s.full_name}
                 subtitle={s.code ? `Join code: ${formatCode(s.code)}` : 'Waiting to join'}
-                right={s.role === 'admin' ? <Badge label="Main admin" tone="primary" /> : undefined}
+                right={s.role !== 'teacher' ? <Badge label={roleLabel(s.role, s.subjects?.name)} tone="primary" /> : undefined}
                 onPress={open(s.id)}
               />
             ))}
@@ -77,7 +77,7 @@ export default function StaffList() {
           <ListRow
             key={s.id}
             title={s.id === myStaffId ? `${s.full_name} (you)` : s.full_name}
-            right={<Badge label={s.role === 'admin' ? 'Main admin' : 'Teacher'} tone={s.role === 'admin' ? 'primary' : 'neutral'} />}
+            right={<Badge label={roleLabel(s.role, s.subjects?.name)} tone={s.role === 'teacher' ? 'neutral' : 'primary'} />}
             onPress={open(s.id)}
           />
         ))}

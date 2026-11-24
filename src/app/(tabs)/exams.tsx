@@ -7,7 +7,7 @@ import { formatDate } from '../../lib/sheet/render';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
-async function load(schoolId: string, isAdmin: boolean) {
+async function load(schoolId: string, isAdmin: boolean, isHod = false) {
   const [exams, staff] = await Promise.all([
     supabase
       .from('exams')
@@ -15,7 +15,7 @@ async function load(schoolId: string, isAdmin: boolean) {
       .eq('school_id', schoolId)
       .order('created_at', { ascending: false })
       .then(must),
-    isAdmin
+    isAdmin || isHod
       ? supabase.from('staff').select('user_id, full_name').eq('school_id', schoolId).then(must)
       : Promise.resolve([] as { user_id: string | null; full_name: string }[]),
   ]);
@@ -25,8 +25,8 @@ async function load(schoolId: string, isAdmin: boolean) {
 
 export default function Exams() {
   const { session } = useAuth();
-  const { schoolId, isAdmin } = useCurrentSchool();
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(schoolId, isAdmin), `${schoolId}:${isAdmin}`);
+  const { schoolId, isAdmin, isHod } = useCurrentSchool();
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(schoolId, isAdmin, isHod), `${schoolId}:${isAdmin}:${isHod}`);
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
@@ -61,15 +61,15 @@ export default function Exams() {
         />
       ) : (
         <>
-          <SectionTitle>{isAdmin && others.length > 0 ? 'Your exams' : `${exams.length} ${exams.length === 1 ? 'exam' : 'exams'}`}</SectionTitle>
+          <SectionTitle>{others.length > 0 ? 'Your exams' : `${exams.length} ${exams.length === 1 ? 'exam' : 'exams'}`}</SectionTitle>
           {mine.length > 0 ? (
             <Group>{mine.map((e) => row(e, false))}</Group>
           ) : (
             <Button variant="secondary" icon="add" title="Create your first exam" onPress={() => router.push('/exams/new')} />
           )}
-          {isAdmin && others.length > 0 ? (
+          {others.length > 0 ? (
             <>
-              <SectionTitle>{"Other teachers' exams"}</SectionTitle>
+              <SectionTitle>{isAdmin ? "Other teachers' exams" : isHod ? "Your department's exams (view only)" : 'Other exams'}</SectionTitle>
               <Group>{others.map((e) => row(e, true))}</Group>
             </>
           ) : null}

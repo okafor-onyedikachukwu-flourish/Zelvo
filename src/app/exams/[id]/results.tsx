@@ -21,6 +21,7 @@ import { friendlyError } from '../../../lib/errors';
 import { keyProgress } from '../../../lib/exams';
 import { buildRows, shareResultsCsv, shareResultsPdf, type ResultExam } from '../../../lib/results';
 import { discardScan, onScansChanged, pendingScans, syncScans, type PendingScan } from '../../../lib/scan/queue';
+import { useCanManageExam } from '../../../lib/permissions';
 import { useCurrentSchool } from '../../../lib/school';
 import { scoreScript } from '../../../lib/scoring';
 import { must, supabase } from '../../../lib/supabase';
@@ -30,7 +31,7 @@ async function load(id: string) {
   const exam = must(
     await supabase
       .from('exams')
-      .select('id, title, exam_date, question_count, option_count, answer_key, mark_per_question, record_out_of, class_id, classes(name), subjects(name)')
+      .select('id, created_by, title, exam_date, question_count, option_count, answer_key, mark_per_question, record_out_of, class_id, classes(name), subjects(name)')
       .eq('id', id)
       .single(),
   );
@@ -48,6 +49,7 @@ export default function Results() {
   const [pending, setPending] = useState<PendingScan[]>([]);
   const [busy, setBusy] = useState<'csv' | 'pdf' | 'sync' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const canManage = useCanManageExam(data?.exam.created_by);
 
   useEffect(() => {
     const refreshPending = () => pendingScans(id).then(setPending);
@@ -112,7 +114,7 @@ export default function Results() {
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <Stack.Screen options={{ title: 'Results' }} />
       {message ? <Banner tone="warning" icon="alert-circle" title={message} /> : null}
-      {set < total ? (
+      {set < total && canManage ? (
         <Banner
           tone="warning"
           icon="key-outline"
@@ -139,14 +141,16 @@ export default function Results() {
         <Banner tone="info" icon="eye-outline" title={`${toCheck} ${toCheck === 1 ? 'answer' : 'answers'} to check`} text="Open a script marked “Check” to confirm what the student shaded." />
       ) : null}
 
-      <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.sm }}>
-        <Button
-          icon="scan-outline"
-          title="Scan more"
-          onPress={() => router.push({ pathname: '/exams/[id]/scan', params: { id } })}
-          style={{ flex: 1 }}
-        />
-      </View>
+      {canManage ? (
+        <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.sm }}>
+          <Button
+            icon="scan-outline"
+            title="Scan more"
+            onPress={() => router.push({ pathname: '/exams/[id]/scan', params: { id } })}
+            style={{ flex: 1 }}
+          />
+        </View>
+      ) : null}
 
       {waiting.length > 0 || failed.length > 0 ? (
         <>

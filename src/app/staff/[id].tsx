@@ -2,16 +2,17 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { colors, space } from '../../components/theme';
-import { Banner, Button, Card, Chip, ErrorView, Field, Input, LoadingView, Screen, confirm } from '../../components/ui';
+import { Banner, Button, Card, ErrorView, Field, Input, LoadingView, Screen, confirm } from '../../components/ui';
 import { friendlyError } from '../../lib/errors';
 import { copyCode, formatCode, shareInvite } from '../../lib/invites';
+import { RolePicker } from '../../components/RolePicker';
 import type { Role } from '../../lib/school';
-import { useCurrentSchool } from '../../lib/school';
+import { toRole, useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
 async function load(id: string) {
-  const person = must(await supabase.from('staff').select('id, full_name, role, user_id, joined_at').eq('id', id).single());
+  const person = must(await supabase.from('staff').select('id, full_name, role, subject_id, user_id, joined_at').eq('id', id).single());
   const invite = must(await supabase.from('staff_invites').select('code').eq('staff_id', id).maybeSingle());
   return { ...person, code: invite?.code ?? null };
 }
@@ -26,17 +27,18 @@ export default function StaffMember() {
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
   const person = data!;
   // Remount the form when saved values change, so it always starts from what's stored.
-  return <StaffForm key={`${person.full_name}|${person.role}|${person.code}`} person={person} reload={reload} />;
+  return <StaffForm key={`${person.full_name}|${person.role}|${person.subject_id}|${person.code}`} person={person} reload={reload} />;
 }
 
 function StaffForm({ person, reload }: { person: Person; reload: () => Promise<void> }) {
   const { school, staffId: myStaffId, refresh: refreshSchools } = useCurrentSchool();
   const [name, setName] = useState(person.full_name);
-  const [role, setRole] = useState<Role>(person.role === 'admin' ? 'admin' : 'teacher');
+  const [role, setRole] = useState<Role>(toRole(person.role));
+  const [subjectId, setSubjectId] = useState<string | null>(person.subject_id);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: 'danger' | 'success'; text: string } | null>(null);
   const isMe = person.id === myStaffId;
-  const changed = name.trim() !== person.full_name || role !== person.role;
+  const changed = name.trim() !== person.full_name || role !== person.role || (role === 'hod' && subjectId !== person.subject_id);
 
   async function run(label: string, action: () => Promise<void>) {
     setBusy(label);
@@ -53,7 +55,15 @@ function StaffForm({ person, reload }: { person: Person; reload: () => Promise<v
   const save = () =>
     run('save', async () => {
       if (name.trim().length < 2) throw new Error('Enter a name.');
-      must(await supabase.from('staff').update({ full_name: name.trim(), role }).eq('id', person.id).select('id').single());
+      if (role === 'hod' && !subjectId) throw new Error('Choose the subject this head of department is responsible for.');
+      must(
+        await supabase
+          .from('staff')
+          .update({ full_name: name.trim(), role, subject_id: role === 'hod' ? subjectId : null })
+          .eq('id', person.id)
+          .select('id')
+          .single(),
+      );
       if (isMe) await refreshSchools();
       await reload();
     });
@@ -104,12 +114,19 @@ function StaffForm({ person, reload }: { person: Person; reload: () => Promise<v
       <Field label="Full name">
         <Input value={name} onChangeText={setName} />
       </Field>
-      <Field label="Role" hint={isMe ? 'If you stop being an admin, you can no longer manage the school.' : undefined}>
-        <View style={{ flexDirection: 'row', gap: space.sm }}>
-          <Chip label="Teacher" selected={role === 'teacher'} onPress={() => setRole('teacher')} />
-          <Chip label="Main admin" selected={role === 'admin'} onPress={() => setRole('admin')} />
-        </View>
-      </Field>
+      <RolePicker
+        role={role}
+        subjectId={subjectId}
+        onChange={(r, sub) => {
+          setRole(r);
+          setSubjectId(sub);
+        }}
+      />
+      {isMe && role !== 'admin' && person.role === 'admin' ? (
+        <Text style={{ fontSize: 13, color: colors.warning, marginBottom: space.md }}>
+          If you stop being head of school, you can no longer manage the school.
+        </Text>
+      ) : null}
       <Button title="Save changes" icon="checkmark" onPress={save} loading={busy === 'save'} disabled={!changed} />
       {!isMe ? (
         <Button

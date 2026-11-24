@@ -6,7 +6,7 @@ import { Button, Card, Group, ListRow, Screen, SectionTitle, confirm } from '../
 import { accountName, useAuth } from '../../lib/auth';
 import { useState } from 'react';
 import { friendlyError } from '../../lib/errors';
-import { useSchool } from '../../lib/school';
+import { roleLabel, useSchool } from '../../lib/school';
 import { supabase } from '../../lib/supabase';
 import { checkForUpdate, currentBuild, downloadAndInstall } from '../../lib/updates';
 
@@ -54,7 +54,7 @@ export default function Account() {
             key={m.school.id}
             icon="business-outline"
             title={m.school.name}
-            subtitle={m.role === 'admin' ? 'Main admin' : 'Teacher'}
+            subtitle={roleLabel(m.role)}
             right={
               m.school.id === current?.school.id ? (
                 <Ionicons name="checkmark-circle" size={22} color={colors.primary} />

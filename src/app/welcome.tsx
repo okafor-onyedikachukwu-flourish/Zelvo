@@ -20,7 +20,7 @@ export default function Welcome() {
         <Option
           icon="business-outline"
           title="Set up a school"
-          text="For a school's main admin. Teaching on your own? Set one up just for yourself."
+          text="For the head of school. Teaching on your own? Set one up just for yourself."
           onPress={() => router.push('/create-school')}
         />
         <Option

@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { colors, space } from '../../components/theme';
 import { UpdateBanner } from '../../components/UpdateBanner';
 import { Badge, Banner, Button, Card, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle } from '../../components/ui';
-import { useCurrentSchool } from '../../lib/school';
+import { roleLabel, useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
@@ -35,7 +35,7 @@ async function loadCounts(schoolId: string): Promise<Counts> {
 }
 
 export default function Home() {
-  const { school, schoolId, fullName, role, isAdmin } = useCurrentSchool();
+  const { school, schoolId, fullName, role, isAdmin, isHod } = useCurrentSchool();
   const { data, loading, error, reload, refresh, refreshing } = useLoad(() => loadCounts(schoolId), schoolId);
 
   if (loading) return <LoadingView />;
@@ -57,9 +57,20 @@ export default function Home() {
         <Text style={{ fontSize: 14, color: colors.muted }}>Hello, {fullName.split(' ')[0]}</Text>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 }}>{school.name}</Text>
         <View style={{ flexDirection: 'row', marginTop: space.sm }}>
-          <Badge label={role === 'admin' ? 'Main admin' : 'Teacher'} tone="primary" />
+          <Badge label={roleLabel(role)} tone="primary" />
         </View>
       </Card>
+
+      <View style={{ marginTop: space.md }}>
+        <Group>
+          <ListRow
+            icon="stats-chart-outline"
+            title={isAdmin ? 'School performance' : isHod ? 'Department performance' : 'My exams performance'}
+            subtitle={isAdmin ? 'Average scores, class by class' : isHod ? 'Your subject in every class' : 'Averages for the exams you set'}
+            onPress={() => router.push('/performance')}
+          />
+        </Group>
+      </View>
 
       {isAdmin ? (
         <>

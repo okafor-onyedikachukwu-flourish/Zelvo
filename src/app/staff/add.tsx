@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { colors, space } from '../../components/theme';
+import { RolePicker } from '../../components/RolePicker';
 import { Banner, Button, Card, Chip, Field, Input, Screen } from '../../components/ui';
 import { friendlyError } from '../../lib/errors';
 import { copyCode, formatCode, shareInvite } from '../../lib/invites';
@@ -18,6 +19,7 @@ export default function AddStaff() {
   const [name, setName] = useState('');
   const [list, setList] = useState('');
   const [role, setRole] = useState<Role>('teacher');
+  const [subjectId, setSubjectId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<Added | null>(null);
@@ -26,11 +28,16 @@ export default function AddStaff() {
 
   async function addOne() {
     if (name.trim().length < 2) return setError("Enter the person's full name.");
+    if (role === 'hod' && !subjectId) return setError('Choose the subject this head of department is responsible for.');
     setBusy(true);
     setError(null);
     try {
       const row = must(
-        await supabase.from('staff').insert({ school_id: schoolId, full_name: name.trim(), role }).select('id').single(),
+        await supabase
+          .from('staff')
+          .insert({ school_id: schoolId, full_name: name.trim(), role, subject_id: role === 'hod' ? subjectId : null })
+          .select('id')
+          .single(),
       );
       const invite = must(await supabase.from('staff_invites').select('code').eq('staff_id', row.id).single());
       setAdded({ name: name.trim(), code: invite.code });
@@ -99,12 +106,14 @@ export default function AddStaff() {
           <Field label="Full name">
             <Input value={name} onChangeText={setName} placeholder="e.g. Emeka Obi" onSubmitEditing={addOne} />
           </Field>
-          <Field label="Role" hint="Main admins can change the school's classes, staff and timetable, and see every exam.">
-            <View style={{ flexDirection: 'row', gap: space.sm }}>
-              <Chip label="Teacher" selected={role === 'teacher'} onPress={() => setRole('teacher')} />
-              <Chip label="Main admin" selected={role === 'admin'} onPress={() => setRole('admin')} />
-            </View>
-          </Field>
+          <RolePicker
+            role={role}
+            subjectId={subjectId}
+            onChange={(r, sub) => {
+              setRole(r);
+              setSubjectId(sub);
+            }}
+          />
           <Button title="Add and get join code" icon="person-add-outline" onPress={addOne} loading={busy} />
         </>
       ) : (

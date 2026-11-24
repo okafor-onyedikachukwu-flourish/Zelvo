@@ -43,10 +43,17 @@ No payments.
 
 ## Roles
 
-- **Main admin** (one or more per school): sets up the school, staff, classes, subjects and class lists; sees every exam.
-- **Teacher:** creates their own exams, prints sheets, scans scripts and sees their own results.
-- **Student:** signs up normally, then asks to join their school and class. Any teacher or main admin approves the request and matches it to the student's name on the class list. Students see their score and which answers were wrong, but only for exams whose teacher has switched on **Students can see results**. Their class timetable comes with stage 4.
-- **Owner of Zelvo:** a dashboard of every school using Zelvo (counts only: no scores, answer keys or names). Owners are listed in the `platform_admins` table.
+Everyone signs up with their own email. The role comes from the school, not from the email address:
+
+| Role | How they get it | What they can do |
+| --- | --- | --- |
+| **Owner of Zelvo** | Listed in `platform_admins` (flourishokafor13@gmail.com) | Dashboard of every school using Zelvo: counts only, no scores or names |
+| **Head of school** | Sets up the school, or is made head of school by another head | Sets up classes, subjects, staff and class lists; sees every exam and the school's performance class by class |
+| **Head of department** | Added by the head with a join code, for one subject | A teacher who also sees their subject's results in every class (view only); will enter the timetable (stage 4) |
+| **Teacher** | Added by the head with a join code | Creates their own exams, prints sheets, scans and marks scripts |
+| **Student** | Any account that doesn't join with a staff code: asks to join a school and class, then a teacher or head approves | Views their released results and corrections; can't change anything |
+
+Only an exam's creator or the head of school can change an exam or its scripts. Students see results only after the teacher switches on **Students can see results**.
 
 ## Updates inside the app
 
