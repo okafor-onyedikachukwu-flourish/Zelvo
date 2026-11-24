@@ -52,7 +52,7 @@ Everyone signs up with their own email (or Google). Right after signing up, Zelv
 | **Staff → Head of department** | Finds the school, selects their department, asks to join; the principal or vice-principal approves | A teacher who also sees their department's results in every class; will enter the timetable (stage 4) |
 | **Staff → Teacher** | Finds the school, selects the subjects they teach, asks to join; approved the same way | Creates their own exams, prints sheets, scans and marks scripts |
 | **Student** | Finds the school, picks their class, types their name, and goes straight to their dashboard | Sees released results once a teacher confirms them (**School → Students on Zelvo**) |
-| **Owner of Zelvo** | Listed in `platform_admins` (flourishokafor13@gmail.com) | Dashboard of every school: counts only, no scores or names |
+| **Owner of Zelvo** | vynkcontact01@gmail.com (made owner automatically when it signs up; see `private.owner_emails`) | Dashboard of every school: counts only, no scores or names |
 
 - Each department is one subject. A department can have up to 2 heads.
 - Staff waiting for approval see a "Waiting for approval" screen; the principal and vice-principal see requests on **Staff** and on Home.
