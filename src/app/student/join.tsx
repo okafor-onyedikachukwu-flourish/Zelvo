@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
+import { CodeInput } from '../../components/CodeInput';
 import { colors, space } from '../../components/theme';
 import { Banner, Button, Chip, Field, Group, Input, ListRow, Screen, SectionTitle } from '../../components/ui';
 import { accountName, useAuth } from '../../lib/auth';
@@ -20,6 +21,8 @@ export default function StudentJoin() {
   const [classId, setClassId] = useState('');
   const [name, setName] = useState(accountName(session));
   const [busy, setBusy] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeBusy, setCodeBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   // Search schools as the student types.
@@ -47,6 +50,20 @@ export default function StudentJoin() {
     }
   }
 
+  async function joinWithCode() {
+    if (code.length !== 8) return setMessage('The code has 8 letters and numbers, like AB3D-EF7H.');
+    setCodeBusy(true);
+    setMessage(null);
+    try {
+      must(await supabase.rpc('join_as_student', { p_code: code }));
+      await refresh();
+      router.replace('/student');
+    } catch (e) {
+      setMessage(friendlyError(e));
+      setCodeBusy(false);
+    }
+  }
+
   async function submit() {
     if (!school) return setMessage('Choose your school.');
     if (!classId) return setMessage('Choose your class.');
@@ -67,7 +84,14 @@ export default function StudentJoin() {
     <Screen>
       {message ? <Banner tone="danger" icon="alert-circle" title={message} /> : null}
 
-      <SectionTitle>1. Your school</SectionTitle>
+      <SectionTitle>Have a code from your teacher?</SectionTitle>
+      <Field label="Your code" hint="Log in with the email your teacher sent it to. The code joins you straight away.">
+        <CodeInput value={code} onChange={setCode} onSubmit={joinWithCode} />
+      </Field>
+      <Button title="Join with code" icon="log-in-outline" onPress={joinWithCode} loading={codeBusy} />
+
+      <SectionTitle>No code? Ask to join</SectionTitle>
+      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: space.sm }}>1. Your school</Text>
       {school ? (
         <Group>
           <ListRow
@@ -79,7 +103,7 @@ export default function StudentJoin() {
         </Group>
       ) : (
         <>
-          <Input value={query} onChangeText={setQuery} placeholder="Type your school's name" autoFocus />
+          <Input value={query} onChangeText={setQuery} placeholder="Type your school's name" />
           {query.trim().length >= 2 ? (
             schools.length > 0 ? (
               <View style={{ marginTop: space.sm }}>
@@ -100,7 +124,7 @@ export default function StudentJoin() {
 
       {school ? (
         <>
-          <SectionTitle>2. Your class</SectionTitle>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginVertical: space.sm }}>2. Your class</Text>
           {classes.length === 0 ? (
             <Text style={{ fontSize: 14, color: colors.muted }}>This school hasn&apos;t added its classes yet. Ask your teacher.</Text>
           ) : (
@@ -111,7 +135,7 @@ export default function StudentJoin() {
             </View>
           )}
 
-          <SectionTitle>3. Your name</SectionTitle>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginVertical: space.sm }}>3. Your name</Text>
           <Field label="Full name" hint="Write it the way your school writes it, so your teacher can find you on the class list.">
             <Input value={name} onChangeText={setName} placeholder="e.g. Okeke Chidinma" />
           </Field>

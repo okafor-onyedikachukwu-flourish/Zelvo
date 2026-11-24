@@ -49,9 +49,9 @@ Everyone signs up with their own email. The role comes from the school, not from
 | --- | --- | --- |
 | **Owner of Zelvo** | Listed in `platform_admins` (flourishokafor13@gmail.com) | Dashboard of every school using Zelvo: counts only, no scores or names |
 | **Head of school** | Sets up the school, or is made head of school by another head | Sets up classes, subjects, staff and class lists; sees every exam and the school's performance class by class |
-| **Head of department** | Added by the head with a join code, for one subject | A teacher who also sees their subject's results in every class (view only); will enter the timetable (stage 4) |
+| **Head of department** | Added by the head with a join code, for one subject (each subject has only one) | A teacher who also sees their subject's results in every class (view only); will enter the timetable (stage 4) |
 | **Teacher** | Added by the head with a join code | Creates their own exams, prints sheets, scans and marks scripts |
-| **Student** | Any account that doesn't join with a staff code: asks to join a school and class, then a teacher or head approves | Views their released results and corrections; can't change anything |
+| **Student** | Uses the code a teacher emailed them (joins straight away), or asks to join a school and class and a teacher or head approves | Views their released results and corrections; can't change anything |
 
 Only an exam's creator or the head of school can change an exam or its scripts. Students see results only after the teacher switches on **Students can see results**.
 
@@ -61,6 +61,19 @@ When adding a teacher or head of department, the head of school can type the per
 "Send to their email" opens the phone's email app with the code and instructions ready; the head just taps Send.
 A code with an email attached only works for an account made with that email, so a forwarded code is useless to anyone else.
 The email can be added or changed later on the person's page, and it is kept when a new code is made.
+
+### Codes
+
+- Every code is 8 letters and numbers, shown as `AB3D-EF7H`, without look-alikes (no 0/O, 1/I).
+- No two codes are the same anywhere in Zelvo (staff or student, any school).
+- A code doesn't contain the role. It points to the record the head of school filled in (name, role, subject, or a name on a class list), and the person's account is linked to that record when they use it. The code is then deleted.
+- Each subject has one head of department. Subjects already taken are greyed out when choosing a head of department.
+
+### Student codes
+
+On a class list, tap a student and type their email (e.g. Gmail). "Send code to their email" opens the email app with their own code and the download link.
+The code only works for an account made with that email and joins the student straight away, linked to their name. Any member of staff can send student codes.
+Students without a code can still ask to join and be approved under **School → Student accounts**.
 
 ## Updates inside the app
 

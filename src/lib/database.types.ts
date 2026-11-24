@@ -225,6 +225,12 @@ export type Database = {
           },
         ];
       };
+      student_invites: {
+        Row: { code: string; created_at: string; created_by: string | null; email: string; school_id: string; student_id: string };
+        Insert: { code: string; created_at?: string; created_by?: string | null; email: string; school_id: string; student_id: string };
+        Update: { code?: string; created_at?: string; created_by?: string | null; email?: string; school_id?: string; student_id?: string };
+        Relationships: [];
+      };
       staff_invites: {
         Row: { code: string; created_at: string; email: string | null; school_id: string; staff_id: string };
         Insert: { code: string; created_at?: string; email?: string | null; school_id: string; staff_id: string };
@@ -366,6 +372,7 @@ export type Database = {
       };
       find_schools: { Args: { p_query: string }; Returns: { id: string; name: string; country: string | null }[] };
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
+      join_as_student: { Args: { p_code: string }; Returns: string };
       join_school: { Args: { p_code: string }; Returns: string };
       my_results: {
         Args: Record<string, never>;
@@ -426,6 +433,7 @@ export type Database = {
       };
       regenerate_invite: { Args: { p_staff_id: string }; Returns: string };
       request_student_access: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
+      send_student_code: { Args: { p_student: string; p_email: string; p_new?: boolean }; Returns: string };
       set_invite_email: { Args: { p_staff_id: string; p_email: string | null }; Returns: undefined };
       school_classes: { Args: { p_school: string }; Returns: { id: string; name: string }[] };
     };

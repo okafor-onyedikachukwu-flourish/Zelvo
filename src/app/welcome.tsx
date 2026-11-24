@@ -26,13 +26,13 @@ export default function Welcome() {
         <Option
           icon="key-outline"
           title="I'm a teacher with a code"
-          text="Your school admin gives each teacher their own 8-character code."
+          text="Your head of school gives each member of staff their own 8-character code."
           onPress={() => router.push('/join-school')}
         />
         <Option
           icon="school-outline"
           title="I'm a student"
-          text="Find your school and class. A teacher approves you, then you can see your results."
+          text="Use the code your teacher emailed you, or find your school and class and ask to join."
           onPress={() => router.push('/student/join')}
         />
         {isOwner ? (

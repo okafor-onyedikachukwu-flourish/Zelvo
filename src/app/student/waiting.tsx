@@ -65,6 +65,13 @@ export default function StudentWaiting() {
           onPress={() => router.push('/student/join')}
           style={{ marginTop: space.sm }}
         />
+        <Button
+          variant="secondary"
+          icon="key-outline"
+          title="I have a code from my teacher"
+          onPress={() => router.push('/student/join')}
+          style={{ marginTop: space.sm }}
+        />
         {request ? <Button variant="ghost" title="Cancel request" onPress={cancel} loading={busy === 'cancel'} style={{ marginTop: space.sm }} /> : null}
         {isOwner ? <Button variant="ghost" icon="globe-outline" title="Zelvo owner dashboard" onPress={() => router.push('/owner')} /> : null}
         <Button variant="ghost" title="Log out" onPress={() => supabase.auth.signOut()} style={{ marginTop: space.lg }} />

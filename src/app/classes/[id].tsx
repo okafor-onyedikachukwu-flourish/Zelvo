@@ -21,18 +21,23 @@ import { useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
-async function load(classId: string) {
-  const [cls, students] = await Promise.all([
+async function load(classId: string, schoolId: string) {
+  const [cls, students, joined, invites] = await Promise.all([
     supabase.from('classes').select('id, name').eq('id', classId).single().then(must),
     supabase.from('students').select('id, full_name').eq('class_id', classId).order('full_name').then(must),
+    supabase.from('student_accounts').select('student_id').eq('class_id', classId).eq('status', 'approved').then(must),
+    supabase.from('student_invites').select('student_id, email').eq('school_id', schoolId).then(must),
   ]);
-  return { cls, students };
+  const status = new Map<string, string>();
+  for (const i of invites) status.set(i.student_id, `Code sent to ${i.email}`);
+  for (const j of joined) if (j.student_id) status.set(j.student_id, 'Joined Zelvo');
+  return { cls, students, status, joinedCount: joined.length };
 }
 
 export default function ClassDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { schoolId, isAdmin } = useCurrentSchool();
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(id), id);
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(id, schoolId), `${id}|${schoolId}`);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [newStudent, setNewStudent] = useState('');
@@ -41,7 +46,7 @@ export default function ClassDetail() {
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
-  const { cls, students } = data!;
+  const { cls, students, status, joinedCount } = data!;
   const q = search.trim().toLowerCase();
   const shown = q ? students.filter((s) => s.full_name.toLowerCase().includes(q)) : students;
 
@@ -118,7 +123,14 @@ export default function ClassDetail() {
         </View>
       ) : null}
 
-      <SectionTitle>{`${students.length} ${students.length === 1 ? 'student' : 'students'}`}</SectionTitle>
+      <SectionTitle>
+        {`${students.length} ${students.length === 1 ? 'student' : 'students'}` + (joinedCount > 0 ? ` · ${joinedCount} on Zelvo` : '')}
+      </SectionTitle>
+      {students.length > 0 ? (
+        <Text style={{ fontSize: 13, color: colors.muted, marginBottom: space.md }}>
+          Tap a student to email them their own code for seeing their results.
+        </Text>
+      ) : null}
 
       {isAdmin ? (
         <View style={{ flexDirection: 'row', gap: space.sm, marginBottom: space.md }}>
@@ -149,6 +161,8 @@ export default function ClassDetail() {
             <ListRow
               key={s.id}
               title={s.full_name}
+              subtitle={status.get(s.id)}
+              onPress={() => router.push({ pathname: '/students/[id]', params: { id: s.id } })}
               right={
                 isAdmin ? (
                   <IconButton icon="trash-outline" label={`Remove ${s.full_name}`} onPress={() => removeStudent(s)} />

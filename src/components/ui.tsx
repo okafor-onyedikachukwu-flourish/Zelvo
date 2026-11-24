@@ -206,11 +206,23 @@ const buttonVariants: Record<ButtonVariant, { bg: string; fg: string; border: st
   danger: { bg: colors.card, fg: colors.danger, border: colors.dangerSoft },
 };
 
-export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
+export function Chip({
+  label,
+  selected,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  selected?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.chip, selected && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+      disabled={disabled}
+      accessibilityState={{ selected, disabled }}
+      style={[styles.chip, selected && { backgroundColor: colors.primary, borderColor: colors.primary }, disabled && { opacity: 0.45 }]}
     >
       <Text style={[styles.chipText, selected && { color: '#FFFFFF' }]}>{label}</Text>
     </Pressable>

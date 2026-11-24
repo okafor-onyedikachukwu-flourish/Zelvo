@@ -161,6 +161,7 @@ function StaffForm({ person, reload }: { person: Person; reload: () => Promise<v
       <RolePicker
         role={role}
         subjectId={subjectId}
+        staffId={person.id}
         onChange={(r, sub) => {
           setRole(r);
           setSubjectId(sub);

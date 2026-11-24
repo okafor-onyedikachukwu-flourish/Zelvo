@@ -93,6 +93,7 @@ function RootNavigator() {
         <Stack.Screen name="classes/index" options={{ title: 'Classes' }} />
         <Stack.Screen name="classes/[id]" options={{ title: 'Class' }} />
         <Stack.Screen name="classes/import" options={{ title: 'Add students', presentation: 'modal' }} />
+        <Stack.Screen name="students/[id]" options={{ title: 'Student' }} />
         <Stack.Screen name="subjects" options={{ title: 'Subjects' }} />
         <Stack.Screen name="student-requests" options={{ title: 'Student accounts' }} />
         <Stack.Screen name="performance" options={{ title: 'Performance' }} />
