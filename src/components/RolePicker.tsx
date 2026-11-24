@@ -20,9 +20,12 @@ async function loadSubjects(schoolId: string) {
   return { subjects, hods };
 }
 
+/** Most heads of department a subject can have in one school (the database enforces the same). */
+export const MAX_HODS_PER_SUBJECT = 2;
+
 /**
  * Role chips, plus the subject when the person is a head of department.
- * Each subject has only one head of department, so subjects taken by someone else can't be picked.
+ * A subject that already has the most heads of department allowed can't be picked.
  */
 export function RolePicker({
   role,
@@ -39,8 +42,14 @@ export function RolePicker({
   const { schoolId } = useCurrentSchool();
   const { data } = useLoad(() => loadSubjects(schoolId), schoolId);
   const subjects = data?.subjects;
-  const takenBy = new Map((data?.hods ?? []).filter((h) => h.id !== staffId && h.subject_id).map((h) => [h.subject_id!, h.full_name]));
-  const taken = (subjects ?? []).filter((s) => takenBy.has(s.id));
+  // Other heads of department of each subject (not counting the person being edited).
+  const hodsOf = new Map<string, string[]>();
+  for (const h of data?.hods ?? []) {
+    if (h.id === staffId || !h.subject_id) continue;
+    hodsOf.set(h.subject_id, [...(hodsOf.get(h.subject_id) ?? []), h.full_name]);
+  }
+  const isFull = (id: string) => (hodsOf.get(id)?.length ?? 0) >= MAX_HODS_PER_SUBJECT;
+  const withHods = (subjects ?? []).filter((s) => hodsOf.has(s.id));
 
   return (
     <>
@@ -52,7 +61,7 @@ export function RolePicker({
         </View>
       </Field>
       {role === 'hod' ? (
-        <Field label="Their subject" hint="They'll see this subject's results in every class. Each subject has one head of department.">
+        <Field label="Their subject" hint={`They'll see this subject's results in every class. A subject can have up to ${MAX_HODS_PER_SUBJECT} heads of department.`}>
           {subjects && subjects.length > 0 ? (
             <>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
@@ -61,14 +70,16 @@ export function RolePicker({
                     key={s.id}
                     label={s.name}
                     selected={subjectId === s.id}
-                    disabled={takenBy.has(s.id)}
+                    disabled={isFull(s.id)}
                     onPress={() => onChange('hod', s.id)}
                   />
                 ))}
               </View>
-              {taken.length > 0 ? (
+              {withHods.length > 0 ? (
                 <Text style={{ fontSize: 13, color: colors.muted, marginTop: space.sm }}>
-                  {'Already taken: ' + taken.map((s) => `${s.name} (${takenBy.get(s.id)})`).join(', ') + '. To change, make that person a teacher first.'}
+                  {'Current heads: ' +
+                    withHods.map((s) => `${s.name} (${hodsOf.get(s.id)!.join(', ')}${isFull(s.id) ? ', full' : ''})`).join('; ') +
+                    '. To free a full subject, make one of its heads a teacher first.'}
                 </Text>
               ) : null}
             </>

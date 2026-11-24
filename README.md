@@ -67,7 +67,7 @@ The email can be added or changed later on the person's page, and it is kept whe
 - Every code is 8 letters and numbers, shown as `AB3D-EF7H`, without look-alikes (no 0/O, 1/I).
 - No two codes are the same anywhere in Zelvo (staff or student, any school).
 - A code doesn't contain the role. It points to the record the head of school filled in (name, role, subject, or a name on a class list), and the person's account is linked to that record when they use it. The code is then deleted.
-- Each subject has one head of department. Subjects already taken are greyed out when choosing a head of department.
+- Each subject can have up to 2 heads of department in a school. A subject that already has 2 is greyed out when choosing a head of department.
 
 ### Student codes
 
