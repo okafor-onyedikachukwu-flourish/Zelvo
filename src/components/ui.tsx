@@ -3,7 +3,6 @@ import { Children, Fragment, type ComponentProps, type ComponentPropsWithRef, ty
 import {
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +15,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import type { Photo as PhotoInfo } from '../lib/photos';
+import { Logo, PhotoStrip } from './Photo';
 import { colors, radius, space } from './theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -55,8 +56,7 @@ export function Screen({
 export function Brand({ subtitle }: { subtitle?: string }) {
   return (
     <View style={styles.brand}>
-      <Image source={require('../../assets/icon.png')} style={styles.brandIcon} />
-      <Text style={styles.brandName}>Zelvo</Text>
+      <Logo size={44} />
       {subtitle ? <Text style={styles.brandSubtitle}>{subtitle}</Text> : null}
     </View>
   );
@@ -98,7 +98,7 @@ export function ListRow({
     <View style={styles.row}>
       {icon ? (
         <View style={styles.rowIcon}>
-          <Ionicons name={icon} size={20} color={colors.primary} />
+          <Ionicons name={icon} size={19} color={colors.primary} />
         </View>
       ) : null}
       <View style={{ flex: 1, gap: 2 }}>
@@ -202,7 +202,7 @@ const buttonVariants: Record<ButtonVariant, { bg: string; fg: string; border: st
   primary: { bg: colors.primary, fg: '#FFFFFF', border: colors.primary },
   secondary: { bg: colors.card, fg: colors.primary, border: colors.border },
   ghost: { bg: 'transparent', fg: colors.primary, border: 'transparent' },
-  danger: { bg: colors.card, fg: colors.danger, border: colors.dangerSoft },
+  danger: { bg: colors.card, fg: colors.danger, border: '#F5C6C6' },
 };
 
 export function Chip({
@@ -288,12 +288,29 @@ export function Banner({
   );
 }
 
-export function EmptyState({ icon, title, text, action }: { icon: IconName; title: string; text: string; action?: ReactNode }) {
+/** A friendly "nothing here yet" message, with a photo when one is given. */
+export function EmptyState({
+  icon,
+  photo,
+  title,
+  text,
+  action,
+}: {
+  icon: IconName;
+  photo?: PhotoInfo;
+  title: string;
+  text: string;
+  action?: ReactNode;
+}) {
   return (
     <View style={styles.empty}>
-      <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={32} color={colors.primary} />
-      </View>
+      {photo ? (
+        <PhotoStrip photo={photo} height={170} style={{ alignSelf: 'stretch', marginBottom: space.sm }} />
+      ) : (
+        <View style={styles.emptyIcon}>
+          <Ionicons name={icon} size={32} color={colors.primary} />
+        </View>
+      )}
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyText}>{text}</Text>
       {action}
@@ -337,8 +354,6 @@ export const styles = StyleSheet.create({
   screen: { padding: space.lg, paddingBottom: 48 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   brand: { alignItems: 'center', gap: space.sm, marginTop: space.xl, marginBottom: space.xl },
-  brandIcon: { width: 72, height: 72, borderRadius: 20 },
-  brandName: { fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: 0.5 },
   brandSubtitle: { fontSize: 15, color: colors.muted, textAlign: 'center' },
   card: {
     backgroundColor: colors.card,
@@ -354,19 +369,19 @@ export const styles = StyleSheet.create({
     borderColor: colors.border,
     overflow: 'hidden',
   },
-  divider: { height: 1, backgroundColor: colors.border, marginLeft: space.lg },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14, paddingHorizontal: space.lg },
+  divider: { height: 1, backgroundColor: '#EEF0F5', marginLeft: space.lg },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14, paddingHorizontal: space.lg, minHeight: 56 },
   rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rowTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
   rowSubtitle: { fontSize: 13, color: colors.muted },
-  iconButton: { padding: 6 },
+  iconButton: { padding: 8 },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -386,51 +401,52 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.sm,
-    paddingVertical: 13,
+    minHeight: 54,
+    paddingVertical: 14,
     paddingHorizontal: space.lg,
-    borderRadius: radius.md,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: 1.5,
   },
-  buttonSmall: { paddingVertical: 8, paddingHorizontal: space.md, borderRadius: radius.sm },
-  buttonText: { fontSize: 16, fontWeight: '600' },
+  buttonSmall: { minHeight: 38, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 12 },
+  buttonText: { fontSize: 16, fontWeight: '700' },
   buttonTextSmall: { fontSize: 14 },
   chip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 15,
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  chipText: { fontSize: 14, color: colors.text, fontWeight: '500' },
-  badge: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.pill },
+  chipText: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  badge: { paddingVertical: 4, paddingHorizontal: 9, borderRadius: radius.pill },
   badgeText: { fontSize: 12, fontWeight: '700' },
   field: { marginBottom: space.lg, gap: 6 },
   label: { fontSize: 14, fontWeight: '600', color: colors.text },
-  hint: { fontSize: 12, color: colors.muted },
+  hint: { fontSize: 13, color: colors.muted },
   input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
+    backgroundColor: colors.field,
+    borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: space.md,
-    paddingVertical: 12,
+    paddingHorizontal: space.lg,
+    paddingVertical: 14,
     fontSize: 16,
     color: colors.text,
   },
-  banner: { flexDirection: 'row', gap: space.md, padding: space.md, borderRadius: radius.md, marginBottom: space.md },
-  bannerTitle: { fontSize: 14, fontWeight: '700' },
-  bannerText: { fontSize: 13, color: colors.text },
-  empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: space.xl, gap: space.sm },
+  banner: { flexDirection: 'row', gap: space.md, padding: 14, borderRadius: 18, marginBottom: space.md },
+  bannerTitle: { fontSize: 15, fontWeight: '700' },
+  bannerText: { fontSize: 13, lineHeight: 18, color: colors.text },
+  empty: { alignItems: 'center', paddingVertical: space.xl, paddingHorizontal: space.sm, gap: space.sm },
   emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 24,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: space.sm,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
-  emptyText: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: space.md },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  emptyText: { fontSize: 15, lineHeight: 22, color: colors.muted, textAlign: 'center', marginBottom: space.md },
 });

@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { type TextInputInstance } from 'react-native';
+import { Text, type TextInputInstance } from 'react-native';
 import { EmailCodeStep, EmailHint, GoogleButton, PasswordInput } from '../components/AuthParts';
-import { space } from '../components/theme';
+import { PhotoStrip } from '../components/Photo';
+import { colors, space } from '../components/theme';
 import { Banner, Button, Field, Input, Screen } from '../components/ui';
 import { friendlyError } from '../lib/errors';
+import { PHOTOS } from '../lib/photos';
 import { cleanEmail, looksLikeEmail, suggestEmail } from '../lib/signup';
 import { supabase } from '../lib/supabase';
 
@@ -65,6 +67,9 @@ export default function SignUp() {
 
   return (
     <Screen>
+      <PhotoStrip photo={PHOTOS.signUp} />
+      <Text style={{ fontSize: 27, lineHeight: 33, fontWeight: '800', color: colors.text, letterSpacing: -0.5, marginTop: space.lg }}>Create your account</Text>
+      <Text style={{ fontSize: 15, color: colors.muted, marginTop: 2, marginBottom: space.lg }}>It takes less than a minute.</Text>
       {error ? (
         <Banner
           tone="danger"

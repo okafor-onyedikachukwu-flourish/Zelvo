@@ -61,7 +61,7 @@ function RootNavigator() {
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="start" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        <Stack.Screen name="sign-up" options={{ title: 'Create account' }} />
+        <Stack.Screen name="sign-up" options={{ title: '' }} />
       </Stack.Protected>
 
       {/* Open whether or not someone is logged in. */}
@@ -77,7 +77,7 @@ function RootNavigator() {
       </Stack.Protected>
 
       <Stack.Protected guard={isStudent}>
-        <Stack.Screen name="student/index" options={{ title: 'Zelvo' }} />
+        <Stack.Screen name="student/index" options={{ headerShown: false }} />
         <Stack.Screen name="student/result/[examId]" options={{ title: 'Result' }} />
       </Stack.Protected>
 

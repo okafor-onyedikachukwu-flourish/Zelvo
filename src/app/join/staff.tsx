@@ -1,21 +1,25 @@
 import { router } from 'expo-router';
-import { OptionCard } from '../../components/AuthParts';
+import { PhotoCard } from '../../components/Photo';
 import { Screen } from '../../components/ui';
+import { PHOTOS } from '../../lib/photos';
 
 /** Staff: head of department or teacher. */
 export default function JoinStaff() {
   return (
     <Screen>
-      <OptionCard
-        icon="git-network-outline"
+      <PhotoCard
+        photo={PHOTOS.staff}
+        photoHeight={96}
+        tone="accent"
         title="Head of department"
-        text="You'll choose your department next. You see its results in every class."
+        text="Choose your department next. You see its results in every class."
         onPress={() => router.push({ pathname: '/join/school', params: { as: 'hod' } })}
       />
-      <OptionCard
-        icon="person-outline"
+      <PhotoCard
+        photo={PHOTOS.start}
+        photoHeight={96}
         title="Teacher"
-        text="You'll choose the subjects you teach next."
+        text="Choose the subjects you teach next."
         onPress={() => router.push({ pathname: '/join/school', params: { as: 'teacher' } })}
       />
     </Screen>

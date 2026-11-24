@@ -1,5 +1,8 @@
 import { router } from 'expo-router';
+import { Text, View } from 'react-native';
+import { colors, space } from '../../components/theme';
 import { Badge, Button, EmptyState, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle } from '../../components/ui';
+import { PHOTOS } from '../../lib/photos';
 import { useAuth } from '../../lib/auth';
 import { keyProgress } from '../../lib/exams';
 import { useCurrentSchool } from '../../lib/school';
@@ -53,12 +56,34 @@ export default function Exams() {
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       {exams.length === 0 ? (
-        <EmptyState
-          icon="document-text-outline"
-          title="No exams yet"
-          text="Create an exam, enter its answer key, then print answer sheets for your students."
-          action={<Button title="New exam" icon="add" onPress={() => router.push('/exams/new')} />}
-        />
+        <>
+          <EmptyState
+            icon="document-text-outline"
+            photo={PHOTOS.writing}
+            title="No exams yet"
+            text="Create your first exam, print the answer sheets, then mark every script with your phone camera."
+            action={<Button title="Create an exam" icon="add" onPress={() => router.push('/exams/new')} style={{ alignSelf: 'stretch' }} />}
+          />
+          <Group>
+            {['Type the answer key', 'Print Zelvo answer sheets', 'Scan the scripts. Done.'].map((step, i) => (
+              <View key={step} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 12, paddingHorizontal: space.lg }}>
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: [colors.primarySoft, colors.accentSoft, colors.successSoft][i],
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: [colors.primary, colors.accentText, colors.success][i] }}>{i + 1}</Text>
+                </View>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{step}</Text>
+              </View>
+            ))}
+          </Group>
+        </>
       ) : (
         <>
           <SectionTitle>{others.length > 0 ? 'Your exams' : `${exams.length} ${exams.length === 1 ? 'exam' : 'exams'}`}</SectionTitle>

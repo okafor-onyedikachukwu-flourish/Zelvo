@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Text } from 'react-native';
+import { Alert, Linking, Text } from 'react-native';
 import { colors, space } from '../../components/theme';
 import { Button, Card, Group, ListRow, Screen, SectionTitle, confirm } from '../../components/ui';
 import { accountName, useAuth } from '../../lib/auth';
 import { useState } from 'react';
 import { friendlyError } from '../../lib/errors';
+import { PHOTOS } from '../../lib/photos';
 import { roleLabel, useSchool } from '../../lib/school';
 import { supabase } from '../../lib/supabase';
 import { checkForUpdate, currentBuild, downloadAndInstall } from '../../lib/updates';
@@ -90,6 +91,21 @@ export default function Account() {
         {isOwner ? (
           <ListRow icon="globe-outline" title="Zelvo owner dashboard" subtitle="Every school using Zelvo" onPress={() => router.push('/owner')} />
         ) : null}
+        <ListRow
+          icon="images-outline"
+          title="Photo credits"
+          subtitle="Free photos from Unsplash"
+          onPress={() =>
+            Alert.alert(
+              'Photos from Unsplash',
+              [...new Set(Object.values(PHOTOS).map((p) => p.by))].join(', '),
+              [
+                { text: 'Close', style: 'cancel' },
+                { text: 'Open Unsplash', onPress: () => Linking.openURL('https://unsplash.com') },
+              ],
+            )
+          }
+        />
       </Group>
 
       <Button variant="danger" icon="log-out-outline" title="Log out" onPress={logOut} style={{ marginTop: space.xl }} />

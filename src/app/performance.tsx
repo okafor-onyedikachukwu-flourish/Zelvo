@@ -5,6 +5,7 @@ import { Badge, Card, EmptyState, ErrorView, Group, ListRow, LoadingView, Screen
 import { useCurrentSchool } from '../lib/school';
 import { must, supabase } from '../lib/supabase';
 import { useLoad } from '../lib/useLoad';
+import { PHOTOS } from '../lib/photos';
 
 type Row = Awaited<ReturnType<typeof load>>[number];
 
@@ -49,7 +50,7 @@ export default function Performance() {
       </Card>
 
       {rows.length === 0 ? (
-        <EmptyState icon="stats-chart-outline" title="Nothing to show yet" text="Results appear here once scripts have been scanned." />
+        <EmptyState photo={PHOTOS.books} icon="stats-chart-outline" title="Nothing to show yet" text="Results appear here once scripts have been scanned." />
       ) : (
         classes.map((cls) => {
           const classRows = rows.filter((r) => r.class_name === cls);

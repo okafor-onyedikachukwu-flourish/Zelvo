@@ -1,11 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { type TextInputInstance } from 'react-native';
+import { Text, type TextInputInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmailCodeStep, EmailHint, GoogleButton, PasswordInput } from '../components/AuthParts';
 import { colors, space } from '../components/theme';
-import { Banner, Brand, Button, Field, Input, Screen } from '../components/ui';
+import { PhotoStrip } from '../components/Photo';
+import { Banner, Button, Field, Input, Screen } from '../components/ui';
 import { friendlyError } from '../lib/errors';
+import { PHOTOS } from '../lib/photos';
 import { cleanEmail, suggestEmail } from '../lib/signup';
 import { supabase } from '../lib/supabase';
 
@@ -61,7 +63,9 @@ export default function SignIn() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
-        <Brand subtitle="Welcome back" />
+        <PhotoStrip photo={PHOTOS.classroom} />
+        <Text style={{ fontSize: 27, lineHeight: 33, fontWeight: '800', color: colors.text, letterSpacing: -0.5, marginTop: space.lg }}>Welcome back</Text>
+        <Text style={{ fontSize: 15, color: colors.muted, marginTop: 2, marginBottom: space.lg }}>Log in to your Zelvo account.</Text>
         {error ? <Banner tone="danger" icon="alert-circle" title={error} /> : null}
 
         <GoogleButton onError={setError} />

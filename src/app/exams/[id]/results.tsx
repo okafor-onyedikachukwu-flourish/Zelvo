@@ -26,6 +26,7 @@ import { useCurrentSchool } from '../../../lib/school';
 import { scoreScript } from '../../../lib/scoring';
 import { must, supabase } from '../../../lib/supabase';
 import { useLoad } from '../../../lib/useLoad';
+import { PHOTOS } from '../../../lib/photos';
 
 async function load(id: string) {
   const exam = must(
@@ -183,7 +184,7 @@ export default function Results() {
       ) : null}
 
       {rows.length === 0 && waiting.length === 0 ? (
-        <EmptyState icon="scan-outline" title="No scripts yet" text="Scan the answer sheets after the exam. Results appear here." />
+        <EmptyState photo={PHOTOS.writing} icon="scan-outline" title="No scripts yet" text="Scan the answer sheets after the exam. Results appear here." />
       ) : null}
 
       {rows.length > 0 ? (

@@ -7,6 +7,7 @@ import { friendlyError } from '../lib/errors';
 import { useCurrentSchool } from '../lib/school';
 import { must, supabase } from '../lib/supabase';
 import { useLoad } from '../lib/useLoad';
+import { PHOTOS } from '../lib/photos';
 
 const words = (s: string) => s.toLowerCase().replace(/[^\p{L}\s]/gu, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
@@ -94,7 +95,7 @@ export default function StudentRequests() {
 
       <SectionTitle>{`Waiting for a teacher to confirm (${pending.length})`}</SectionTitle>
       {pending.length === 0 ? (
-        <EmptyState icon="person-add-outline" title="Nobody waiting" text="Students who join your school appear here for you to confirm." />
+        <EmptyState photo={PHOTOS.student} icon="person-add-outline" title="Nobody waiting" text="Students who join your school appear here for you to confirm." />
       ) : (
         pending.map((r) => {
           const match = bestMatch(r);

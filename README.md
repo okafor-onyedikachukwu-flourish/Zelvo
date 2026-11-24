@@ -67,6 +67,12 @@ Everyone signs up with their own email (or Google). Right after signing up, Zelv
 - **Forgot password?** emails a code (not a link). The Supabase "Reset password" email template must include `{{ .Token }}`, and real emails need custom SMTP, because Supabase's built-in email only reaches the project's own team.
 - If **Confirm email** is switched on, new accounts get a code by email to enter in the app (the "Confirm signup" template must include `{{ .Token }}`).
 
+## Look and photos
+
+- "Fresh & bright": white cards on a light grey background, deep indigo (`#3D35C9`) with warm orange (`#F2711C`) highlights, big rounded corners. Colours live in `src/components/theme.ts`.
+- Photos are free Unsplash photos (`src/lib/photos.ts`), shown with `expo-image`: downloaded the first time, then kept on the phone. Until a photo loads (or with no internet) its space shows a matching colour. Credits are under Account → Photo credits.
+- Photo screens: Start, sign-up and log-in, Who are you?, Home, the student dashboard, and the empty screens. The design preview lives in the "Zelvo app design" canvas.
+
 ## Updates inside the app
 
 Zelvo checks GitHub Releases for a newer build when it opens. If there is one, it shows **Update available → Update now**: one tap downloads the APK and opens Android's installer (Android always asks to confirm installs from outside the Play Store, and the first time it may ask to allow installs from Zelvo). **Account → Check for updates** does the same on demand.

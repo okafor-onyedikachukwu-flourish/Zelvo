@@ -8,6 +8,7 @@ import { friendlyError } from '../../lib/errors';
 import { useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
+import { PHOTOS } from '../../lib/photos';
 
 const byName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
@@ -55,7 +56,7 @@ export default function Classes() {
       ) : null}
 
       {classes.length === 0 ? (
-        <EmptyState
+        <EmptyState photo={PHOTOS.classroom}
           icon="people-outline"
           title="No classes yet"
           text={isAdmin ? 'Add the classes in your school, such as JSS1A or Grade 7 Blue.' : 'Your principal or vice-principal hasn’t added classes yet.'}

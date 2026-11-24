@@ -20,6 +20,7 @@ import { friendlyError } from '../lib/errors';
 import { useCurrentSchool } from '../lib/school';
 import { must, supabase } from '../lib/supabase';
 import { useLoad } from '../lib/useLoad';
+import { PHOTOS } from '../lib/photos';
 
 async function load(schoolId: string) {
   return must(await supabase.from('subjects').select('id, name').eq('school_id', schoolId).order('name'));
@@ -83,7 +84,7 @@ export default function Subjects() {
       ) : null}
 
       {subjects.length === 0 ? (
-        <EmptyState
+        <EmptyState photo={PHOTOS.pencils}
           icon="book-outline"
           title="No departments yet"
           text={isAdmin ? 'Add the departments (subjects) taught in your school.' : 'Your vice-principal academic hasn’t added departments yet.'}

@@ -7,6 +7,7 @@ import { friendlyError } from '../../lib/errors';
 import { appliedAsLabel, roleLabel, useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
+import { PHOTOS } from '../../lib/photos';
 
 async function load(schoolId: string, isAdmin: boolean) {
   const [staff, requests] = await Promise.all([
@@ -100,7 +101,7 @@ export default function StaffList() {
 
       <SectionTitle>{`Staff (${others.length})`}</SectionTitle>
       {others.length === 0 ? (
-        <EmptyState icon="people-outline" title="No staff yet" text="Teachers and heads of department appear here once approved." />
+        <EmptyState photo={PHOTOS.staff} icon="people-outline" title="No staff yet" text="Teachers and heads of department appear here once approved." />
       ) : (
         <Group>
           {others.map((s) => (
