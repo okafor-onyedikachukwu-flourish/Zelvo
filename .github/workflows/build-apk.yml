@@ -45,7 +45,11 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      - uses: android-actions/setup-android@v3
+      # The runner already has the Android SDK; just accept its licences so Gradle can add missing parts.
+      - name: Accept Android SDK licences
+        run: |
+          SDKMANAGER=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
 
       - name: Install packages
         run: npm ci
