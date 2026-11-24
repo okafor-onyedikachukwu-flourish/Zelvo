@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 import { colors, space } from '../../../components/theme';
 import { Banner, Button, Card, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle, confirm } from '../../../components/ui';
 import { friendlyError } from '../../../lib/errors';
@@ -15,7 +15,7 @@ async function load(id: string) {
   return must(
     await supabase
       .from('exams')
-      .select('id, school_id, title, exam_date, question_count, option_count, mark_per_question, record_out_of, answer_key, classes(name), subjects(name)')
+      .select('id, school_id, title, exam_date, question_count, option_count, mark_per_question, record_out_of, results_released, answer_key, classes(name), subjects(name)')
       .eq('id', id)
       .single(),
   );
@@ -34,6 +34,7 @@ export default function ExamDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, loading, error, reload, refresh, refreshing } = useLoad(() => loadAll(id), id);
   const [message, setMessage] = useState<string | null>(null);
+  const [releasing, setReleasing] = useState(false);
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
@@ -41,6 +42,19 @@ export default function ExamDetail() {
   const { set, total } = keyProgress(exam.answer_key);
   const mark = Number(exam.mark_per_question);
   const pages = pageCount(exam.question_count, exam.option_count);
+
+  async function setReleased(value: boolean) {
+    if (value && !(await confirm('Show results to students?', 'Students linked to this class will see their score and which answers were wrong.', 'Show results'))) return;
+    setReleasing(true);
+    try {
+      must(await supabase.from('exams').update({ results_released: value }).eq('id', exam.id).select('id').single());
+      await reload();
+    } catch (e) {
+      setMessage(friendlyError(e));
+    } finally {
+      setReleasing(false);
+    }
+  }
 
   async function remove() {
     const extra = exam.scriptCount > 0 ? ` and ${exam.scriptCount} scanned ${exam.scriptCount === 1 ? 'script' : 'scripts'}` : '';
@@ -101,6 +115,12 @@ export default function ExamDetail() {
           title="Results"
           subtitle={exam.scriptCount === 0 ? 'No scripts scanned yet' : `${exam.scriptCount} ${exam.scriptCount === 1 ? 'script' : 'scripts'} marked`}
           onPress={() => router.push({ pathname: '/exams/[id]/results', params: { id: exam.id } })}
+        />
+        <ListRow
+          icon="eye-outline"
+          title="Students can see results"
+          subtitle={exam.results_released ? 'On: students see their score and corrections' : 'Off: turn on after checking the scripts'}
+          right={<Switch value={exam.results_released} onValueChange={setReleased} disabled={releasing} trackColor={{ true: colors.primary }} />}
         />
       </Group>
 

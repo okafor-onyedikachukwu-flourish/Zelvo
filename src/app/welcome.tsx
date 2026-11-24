@@ -5,10 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, space } from '../components/theme';
 import { Brand, Button, Screen, type IconName } from '../components/ui';
 import { accountName, useAuth } from '../lib/auth';
+import { useSchool } from '../lib/school';
 import { supabase } from '../lib/supabase';
 
 export default function Welcome() {
   const { session } = useAuth();
+  const { isOwner } = useSchool();
   const firstName = accountName(session).split(' ')[0];
 
   return (
@@ -18,15 +20,24 @@ export default function Welcome() {
         <Option
           icon="business-outline"
           title="Set up a school"
-          text="For school admins. Teaching on your own? Set one up just for yourself."
+          text="For a school's main admin. Teaching on your own? Set one up just for yourself."
           onPress={() => router.push('/create-school')}
         />
         <Option
           icon="key-outline"
-          title="Join with a code"
+          title="I'm a teacher with a code"
           text="Your school admin gives each teacher their own 8-character code."
           onPress={() => router.push('/join-school')}
         />
+        <Option
+          icon="school-outline"
+          title="I'm a student"
+          text="Find your school and class. A teacher approves you, then you can see your results."
+          onPress={() => router.push('/student/join')}
+        />
+        {isOwner ? (
+          <Option icon="globe-outline" title="Zelvo owner dashboard" text="Every school using Zelvo, at a glance." onPress={() => router.push('/owner')} />
+        ) : null}
         <Button variant="ghost" title="Log out" onPress={() => supabase.auth.signOut()} style={{ marginTop: space.lg }} />
       </Screen>
     </SafeAreaView>

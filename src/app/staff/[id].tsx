@@ -107,7 +107,7 @@ function StaffForm({ person, reload }: { person: Person; reload: () => Promise<v
       <Field label="Role" hint={isMe ? 'If you stop being an admin, you can no longer manage the school.' : undefined}>
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Chip label="Teacher" selected={role === 'teacher'} onPress={() => setRole('teacher')} />
-          <Chip label="Admin" selected={role === 'admin'} onPress={() => setRole('admin')} />
+          <Chip label="Main admin" selected={role === 'admin'} onPress={() => setRole('admin')} />
         </View>
       </Field>
       <Button title="Save changes" icon="checkmark" onPress={save} loading={busy === 'save'} disabled={!changed} />

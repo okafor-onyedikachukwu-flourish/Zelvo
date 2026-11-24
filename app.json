@@ -22,6 +22,9 @@
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
+      ],
+      "permissions": [
+        "android.permission.REQUEST_INSTALL_PACKAGES"
       ]
     },
     "web": {

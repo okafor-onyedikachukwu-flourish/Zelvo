@@ -4,12 +4,35 @@ import { Text } from 'react-native';
 import { colors, space } from '../../components/theme';
 import { Button, Card, Group, ListRow, Screen, SectionTitle, confirm } from '../../components/ui';
 import { accountName, useAuth } from '../../lib/auth';
+import { useState } from 'react';
+import { friendlyError } from '../../lib/errors';
 import { useSchool } from '../../lib/school';
 import { supabase } from '../../lib/supabase';
+import { checkForUpdate, currentBuild, downloadAndInstall } from '../../lib/updates';
 
 export default function Account() {
   const { session } = useAuth();
-  const { memberships, current, switchSchool } = useSchool();
+  const { memberships, current, switchSchool, isOwner } = useSchool();
+  const [updateState, setUpdateState] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  async function update() {
+    setUpdating(true);
+    setUpdateState('Checking…');
+    try {
+      const u = await checkForUpdate(true);
+      if (!u) {
+        setUpdateState('You have the latest version.');
+        return;
+      }
+      await downloadAndInstall(u, (f) => setUpdateState(`Downloading build ${u.build}… ${Math.round(f * 100)}%`));
+      setUpdateState(null);
+    } catch (e) {
+      setUpdateState(friendlyError(e));
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   async function logOut() {
     if (await confirm('Log out?', 'You can log back in with your email and password.', 'Log out')) {
@@ -31,7 +54,7 @@ export default function Account() {
             key={m.school.id}
             icon="business-outline"
             title={m.school.name}
-            subtitle={m.role === 'admin' ? 'Admin' : 'Teacher'}
+            subtitle={m.role === 'admin' ? 'Main admin' : 'Teacher'}
             right={
               m.school.id === current?.school.id ? (
                 <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
@@ -55,6 +78,19 @@ export default function Account() {
         onPress={() => router.push('/create-school')}
         style={{ marginTop: space.sm }}
       />
+
+      <SectionTitle>App</SectionTitle>
+      <Group>
+        <ListRow
+          icon="arrow-up-circle-outline"
+          title="Check for updates"
+          subtitle={updateState ?? `This is build ${currentBuild() || '–'}. Tap to update if there's a newer one.`}
+          onPress={updating ? undefined : update}
+        />
+        {isOwner ? (
+          <ListRow icon="globe-outline" title="Zelvo owner dashboard" subtitle="Every school using Zelvo" onPress={() => router.push('/owner')} />
+        ) : null}
+      </Group>
 
       <Button variant="danger" icon="log-out-outline" title="Log out" onPress={logOut} style={{ marginTop: space.xl }} />
     </Screen>

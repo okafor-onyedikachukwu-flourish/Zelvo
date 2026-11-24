@@ -63,7 +63,7 @@ export default function StaffList() {
                 key={s.id}
                 title={s.full_name}
                 subtitle={s.code ? `Join code: ${formatCode(s.code)}` : 'Waiting to join'}
-                right={s.role === 'admin' ? <Badge label="Admin" tone="primary" /> : undefined}
+                right={s.role === 'admin' ? <Badge label="Main admin" tone="primary" /> : undefined}
                 onPress={open(s.id)}
               />
             ))}
@@ -77,7 +77,7 @@ export default function StaffList() {
           <ListRow
             key={s.id}
             title={s.id === myStaffId ? `${s.full_name} (you)` : s.full_name}
-            right={<Badge label={s.role === 'admin' ? 'Admin' : 'Teacher'} tone={s.role === 'admin' ? 'primary' : 'neutral'} />}
+            right={<Badge label={s.role === 'admin' ? 'Main admin' : 'Teacher'} tone={s.role === 'admin' ? 'primary' : 'neutral'} />}
             onPress={open(s.id)}
           />
         ))}

@@ -24,7 +24,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { session, loading: authLoading } = useAuth();
-  const { loading, current, error, refresh } = useSchool();
+  const { loading, current, error, refresh, studentAccounts, isOwner } = useSchool();
   const userId = session?.user.id;
 
   // Send scans saved offline whenever the app opens or comes back to the front.
@@ -42,6 +42,9 @@ function RootNavigator() {
 
   const signedIn = !!session;
   const hasSchool = signedIn && !!current;
+  // Staff come first: an account that works at a school always sees the staff app.
+  const isStudent = signedIn && !hasSchool && studentAccounts.some((a) => a.status === 'approved');
+  const isWaiting = signedIn && !hasSchool && !isStudent && studentAccounts.length > 0;
 
   return (
     <Stack
@@ -58,13 +61,27 @@ function RootNavigator() {
         <Stack.Screen name="sign-up" options={{ title: 'Create account' }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={signedIn && !hasSchool}>
+      <Stack.Protected guard={signedIn && !hasSchool && !isStudent && !isWaiting}>
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isWaiting}>
+        <Stack.Screen name="student/waiting" options={{ headerShown: false }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isStudent}>
+        <Stack.Screen name="student/index" options={{ title: 'Zelvo' }} />
+        <Stack.Screen name="student/result/[examId]" options={{ title: 'Result' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="create-school" options={{ title: 'Set up a school' }} />
         <Stack.Screen name="join-school" options={{ title: 'Join a school' }} />
+        <Stack.Screen name="student/join" options={{ title: 'Join as a student' }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={signedIn && isOwner}>
+        <Stack.Screen name="owner" options={{ title: 'Zelvo owner dashboard' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={hasSchool}>
@@ -77,6 +94,7 @@ function RootNavigator() {
         <Stack.Screen name="classes/[id]" options={{ title: 'Class' }} />
         <Stack.Screen name="classes/import" options={{ title: 'Add students', presentation: 'modal' }} />
         <Stack.Screen name="subjects" options={{ title: 'Subjects' }} />
+        <Stack.Screen name="student-requests" options={{ title: 'Student accounts' }} />
         <Stack.Screen name="exams/new" options={{ title: 'New exam', presentation: 'modal' }} />
         <Stack.Screen name="exams/[id]/index" options={{ title: 'Exam' }} />
         <Stack.Screen name="exams/[id]/edit" options={{ title: 'Edit exam' }} />

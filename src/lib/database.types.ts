@@ -32,6 +32,7 @@ export type Database = {
           option_count: number;
           question_count: number;
           record_out_of: number | null;
+          results_released: boolean;
           school_id: string;
           subject_id: string;
           title: string;
@@ -48,6 +49,7 @@ export type Database = {
           option_count?: number;
           question_count: number;
           record_out_of?: number | null;
+          results_released?: boolean;
           school_id: string;
           subject_id: string;
           title: string;
@@ -64,6 +66,7 @@ export type Database = {
           option_count?: number;
           question_count?: number;
           record_out_of?: number | null;
+          results_released?: boolean;
           school_id?: string;
           subject_id?: string;
           title?: string;
@@ -233,6 +236,60 @@ export type Database = {
           },
         ];
       };
+      student_accounts: {
+        Row: {
+          class_id: string;
+          created_at: string;
+          decided_at: string | null;
+          decided_by: string | null;
+          id: string;
+          school_id: string;
+          status: string;
+          student_id: string | null;
+          typed_name: string;
+          user_id: string;
+        };
+        Insert: {
+          class_id: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          id?: string;
+          school_id: string;
+          status?: string;
+          student_id?: string | null;
+          typed_name: string;
+          user_id?: string;
+        };
+        Update: {
+          class_id?: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          id?: string;
+          school_id?: string;
+          status?: string;
+          student_id?: string | null;
+          typed_name?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'student_accounts_class_id_school_id_fkey';
+            columns: ['class_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'classes';
+            referencedColumns: ['id', 'school_id'];
+          },
+          {
+            foreignKeyName: 'student_accounts_student_id_school_id_fkey';
+            columns: ['student_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'students';
+            referencedColumns: ['id', 'school_id'];
+          },
+        ];
+      };
       students: {
         Row: { class_id: string; created_at: string; full_name: string; id: string; school_id: string };
         Insert: { class_id: string; created_at?: string; full_name: string; id?: string; school_id: string };
@@ -279,7 +336,55 @@ export type Database = {
         Args: { p_admin_name: string; p_country?: string; p_name: string; p_timezone?: string };
         Returns: string;
       };
+      decide_student_access: { Args: { p_request: string; p_student: string | null; p_approve: boolean }; Returns: undefined };
+      find_schools: { Args: { p_query: string }; Returns: { id: string; name: string; country: string | null }[] };
+      is_platform_admin: { Args: Record<string, never>; Returns: boolean };
       join_school: { Args: { p_code: string }; Returns: string };
+      my_results: {
+        Args: Record<string, never>;
+        Returns: {
+          exam_id: string;
+          school_id: string;
+          title: string;
+          subject: string;
+          exam_date: string | null;
+          question_count: number;
+          option_count: number;
+          mark_per_question: number;
+          record_out_of: number | null;
+          answer_key: string;
+          answers: string;
+          updated_at: string;
+        }[];
+      };
+      my_student_accounts: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          school_id: string;
+          school_name: string;
+          class_id: string;
+          class_name: string;
+          typed_name: string;
+          student_name: string | null;
+          status: string;
+        }[];
+      };
+      platform_overview: {
+        Args: Record<string, never>;
+        Returns: {
+          school_id: string;
+          name: string;
+          country: string | null;
+          created_at: string;
+          staff: number;
+          staff_joined: number;
+          students: number;
+          student_accounts: number;
+          exams: number;
+          scripts: number;
+        }[];
+      };
       record_scan: {
         Args: {
           p_answers: string;
@@ -293,6 +398,8 @@ export type Database = {
         Returns: string;
       };
       regenerate_invite: { Args: { p_staff_id: string }; Returns: string };
+      request_student_access: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
+      school_classes: { Args: { p_school: string }; Returns: { id: string; name: string }[] };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

@@ -2,12 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
 import { Text, View } from 'react-native';
 import { colors, space } from '../../components/theme';
-import { Badge, Banner, Card, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle } from '../../components/ui';
+import { UpdateBanner } from '../../components/UpdateBanner';
+import { Badge, Banner, Button, Card, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle } from '../../components/ui';
 import { useCurrentSchool } from '../../lib/school';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
-type Counts = { classes: number; subjects: number; students: number; staff: number; joined: number };
+type Counts = { classes: number; subjects: number; students: number; staff: number; joined: number; requests: number };
 
 async function loadCounts(schoolId: string): Promise<Counts> {
   const count = async (table: 'classes' | 'subjects' | 'students') => {
@@ -15,13 +16,22 @@ async function loadCounts(schoolId: string): Promise<Counts> {
     if (res.error) throw res.error;
     return res.count ?? 0;
   };
-  const [classes, subjects, students, staff] = await Promise.all([
+  const [classes, subjects, students, staff, requests] = await Promise.all([
     count('classes'),
     count('subjects'),
     count('students'),
     supabase.from('staff').select('user_id').eq('school_id', schoolId).then(must),
+    supabase
+      .from('student_accounts')
+      .select('id', { count: 'exact', head: true })
+      .eq('school_id', schoolId)
+      .eq('status', 'pending')
+      .then((r) => {
+        if (r.error) throw r.error;
+        return r.count ?? 0;
+      }),
   ]);
-  return { classes, subjects, students, staff: staff.length, joined: staff.filter((s) => s.user_id).length };
+  return { classes, subjects, students, staff: staff.length, joined: staff.filter((s) => s.user_id).length, requests };
 }
 
 export default function Home() {
@@ -34,11 +44,20 @@ export default function Home() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
+      <UpdateBanner />
+      {c.requests > 0 ? (
+        <Banner
+          tone="info"
+          icon="school-outline"
+          title={`${c.requests} ${c.requests === 1 ? 'student is' : 'students are'} waiting for approval`}
+          action={<Button small title="Review" onPress={() => router.push('/student-requests')} />}
+        />
+      ) : null}
       <Card>
         <Text style={{ fontSize: 14, color: colors.muted }}>Hello, {fullName.split(' ')[0]}</Text>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 2 }}>{school.name}</Text>
         <View style={{ flexDirection: 'row', marginTop: space.sm }}>
-          <Badge label={role === 'admin' ? 'Admin' : 'Teacher'} tone="primary" />
+          <Badge label={role === 'admin' ? 'Main admin' : 'Teacher'} tone="primary" />
         </View>
       </Card>
 

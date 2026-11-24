@@ -41,6 +41,17 @@ No payments.
 - **Checking:** answers Zelvo isn't sure of (faint, partly rubbed out) or with two bubbles shaded are marked "Check". The script screen shows a picture of that question from the sheet and lets you tap the right answer. You can also change any answer or the student.
 - Only the exam's creator and the school's admins can see its scripts and page photos.
 
+## Roles
+
+- **Main admin** (one or more per school): sets up the school, staff, classes, subjects and class lists; sees every exam.
+- **Teacher:** creates their own exams, prints sheets, scans scripts and sees their own results.
+- **Student:** signs up normally, then asks to join their school and class. Any teacher or main admin approves the request and matches it to the student's name on the class list. Students see their score and which answers were wrong, but only for exams whose teacher has switched on **Students can see results**. Their class timetable comes with stage 4.
+- **Owner of Zelvo:** a dashboard of every school using Zelvo (counts only: no scores, answer keys or names). Owners are listed in the `platform_admins` table.
+
+## Updates inside the app
+
+Zelvo checks GitHub Releases for a newer build when it opens. If there is one, it shows **Update available → Update now**: one tap downloads the APK and opens Android's installer (Android always asks to confirm installs from outside the Play Store, and the first time it may ask to allow installs from Zelvo). **Account → Check for updates** does the same on demand.
+
 ## Project layout
 
 ```

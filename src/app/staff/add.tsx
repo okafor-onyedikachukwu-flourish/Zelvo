@@ -99,10 +99,10 @@ export default function AddStaff() {
           <Field label="Full name">
             <Input value={name} onChangeText={setName} placeholder="e.g. Emeka Obi" onSubmitEditing={addOne} />
           </Field>
-          <Field label="Role" hint="Admins can change the school's classes, staff and timetable.">
+          <Field label="Role" hint="Main admins can change the school's classes, staff and timetable, and see every exam.">
             <View style={{ flexDirection: 'row', gap: space.sm }}>
               <Chip label="Teacher" selected={role === 'teacher'} onPress={() => setRole('teacher')} />
-              <Chip label="Admin" selected={role === 'admin'} onPress={() => setRole('admin')} />
+              <Chip label="Main admin" selected={role === 'admin'} onPress={() => setRole('admin')} />
             </View>
           </Field>
           <Button title="Add and get join code" icon="person-add-outline" onPress={addOne} loading={busy} />
