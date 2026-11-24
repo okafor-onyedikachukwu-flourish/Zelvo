@@ -48,18 +48,22 @@ src/lib/
 supabase/migrations/           Database schema and security rules
 ```
 
-## Build an APK
+## Build the Android app from your phone (GitHub Codespaces)
 
-The app connects to the Zelvo Supabase project out of the box (see `src/lib/config.ts`).
+No computer needed. Codespaces is a free cloud computer that opens in your phone's browser. The app is already linked to the **zelvo** project on expo.dev and connects to the Zelvo Supabase project (see `src/lib/config.ts`).
 
-On expo.dev, open the **zelvo** project, connect this GitHub repository, then start an **Android** build with the **preview** profile. When it finishes, open the link on your phone and install the APK.
+1. Open the `zelvo` repository on github.com and tap **Code → Codespaces → Create codespace on main**. If the page is cramped, switch your browser to **Desktop site**. Wait until setup finishes; it installs everything automatically.
+2. In the **Terminal** at the bottom, run these one at a time, answering **Y** (yes) to each question:
+   ```bash
+   npx eas-cli@latest login
+   npx eas-cli@latest build --platform android --profile preview
+   ```
+   - `login` uses your expo.dev account.
+   - The first `build` asks to create an Android signing key; say yes, and Expo stores it safely.
+3. Expo builds the app on its servers (the free plan can queue for a while) and prints a link. Open it on your phone and install the APK.
+4. Stop the codespace when you're done (github.com/codespaces → **⋯ → Stop**) so it doesn't use up your free hours.
 
-From a computer instead:
-
-```bash
-npm install
-npx eas-cli@latest build -p android --profile preview
-```
+After this first build, later builds can also be started from expo.dev with **Build from GitHub**.
 
 ## Checks
 

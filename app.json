@@ -26,6 +26,12 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "owner": "okafor_onyedikachukwu_flourish01",
+    "extra": {
+      "eas": {
+        "projectId": "736a28c5-8df4-439e-a598-746156b62aa5"
+      }
+    }
   }
 }
