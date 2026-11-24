@@ -11,7 +11,7 @@ No payments.
 
 1. **Done:** accounts, schools, staff with join codes, classes, subjects and optional class lists
 2. **Done:** exams and answer keys, plus the printable answer sheet (PDF)
-3. Scanning, bubble reading, a review screen for unclear answers, and results with export
+3. **Done:** scanning on the phone (works offline), a review screen for unclear answers, and results with export
 4. Timetable: bell times, timetable upload, clash checks and the teacher screens
 5. Alarms: offline scheduling, the full-screen alarm, syncing changes and exam timetable mode
 6. Reading handwritten answers and names (foolscap mode)
@@ -32,6 +32,15 @@ No payments.
 - The answer key can be tapped in question by question or typed/pasted in one go ("ABDC CADB…" or "1A 2C 3B…"). It saves automatically. ✱ gives everyone the mark for a question.
 - **Answer sheets** (A4 PDF, print or share): *named* sheets carry each student's name from the class list, so scanning needs no handwriting reading; *blank* sheets have boxes for the student to write their name, class and subject. Long exams continue on more pages. The layout is described in `docs/answer-sheet-layout.md`.
 
+## How stage 3 works
+
+- **Scan scripts** opens the camera. Each photo is read on the phone in a second or two, even without internet: Zelvo finds the four black squares, reads the QR code (exam, student, page) and checks every bubble. You can also pick photos from the gallery (e.g. sent on WhatsApp).
+- Named sheets know whose script they are. For blank sheets, Zelvo asks you to pick the name from the class list (or type it). Handwritten names will be read automatically in stage 6.
+- Scans are saved on the phone and uploaded as soon as there's internet. Multi-page scripts are joined automatically.
+- **Results:** score, percentage and (optionally) the score converted to a "record out of" total, e.g. 40 questions recorded out of 30. Class average, highest and lowest. Export as a spreadsheet (CSV, with every answer) or PDF.
+- **Checking:** answers Zelvo isn't sure of (faint, partly rubbed out) or with two bubbles shaded are marked "Check". The script screen shows a picture of that question from the sheet and lets you tap the right answer. You can also change any answer or the student.
+- Only the exam's creator and the school's admins can see its scripts and page photos.
+
 ## Project layout
 
 ```
@@ -47,7 +56,8 @@ src/app/                       Screens (Expo Router)
   staff/                       Staff list, add staff, staff member (join code, role)
   classes/                     Class list, class detail, add students (paste or CSV)
   subjects.tsx, school-details.tsx
-  exams/                       New exam, exam detail, edit, answer key, answer sheets
+  exams/                       New exam, exam detail, edit, answer key, answer sheets,
+                               scan, results, script review
 src/components/                Shared UI
 src/lib/
   supabase.ts, config.ts       Supabase connection
@@ -57,9 +67,11 @@ src/lib/
   exams.ts                     Answer key helpers
   sheet/layout.ts              Answer sheet measurements (shared with the scanner)
   sheet/render.ts              Draws the answer sheets as printable HTML/SVG
+  scan/                        Reads photos of answer sheets on the phone; offline upload queue
+  scoring.ts, results.ts       Scores, CSV and PDF export
 supabase/migrations/           Database schema and security rules
-docs/answer-sheet-layout.md    Answer sheet layout for the scanner
-tools/omr_check.py             Prototype: reads a distorted photo of a filled sheet
+docs/answer-sheet-layout.md    Answer sheet layout and how the reader works
+tools/test/                    Realistic test photos for the reader
 ```
 
 ## Build the Android app from your phone (GitHub Codespaces)

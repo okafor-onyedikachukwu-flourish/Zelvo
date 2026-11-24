@@ -18,6 +18,7 @@ export type ExamValues = {
   questionCount: number;
   optionCount: number;
   markPerQuestion: number;
+  recordOutOf: number | null;
 };
 
 async function loadChoices(schoolId: string) {
@@ -51,6 +52,7 @@ export function ExamForm({
   const [questions, setQuestions] = useState(initial ? String(initial.questionCount) : '');
   const [optionCount, setOptionCount] = useState(initial?.optionCount ?? 4);
   const [mark, setMark] = useState(initial ? String(initial.markPerQuestion) : '1');
+  const [recordOutOf, setRecordOutOf] = useState(initial?.recordOutOf ? String(initial.recordOutOf) : '');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -89,6 +91,10 @@ export function ExamForm({
       return setMessage(`Enter the number of questions (1 to ${MAX_QUESTIONS}).`);
     }
     if (!(markValue > 0) || markValue > 1000) return setMessage('Enter the mark for each question, e.g. 1 or 0.5.');
+    const recordValue = recordOutOf.trim() ? Number(recordOutOf.replace(',', '.')) : null;
+    if (recordValue !== null && (!(recordValue > 0) || recordValue > 10000)) {
+      return setMessage('"Record out of" must be a number, e.g. 30. Leave it empty to keep the raw score.');
+    }
     setBusy(true);
     setMessage(null);
     try {
@@ -100,6 +106,7 @@ export function ExamForm({
         questionCount: count,
         optionCount,
         markPerQuestion: Math.round(markValue * 100) / 100,
+        recordOutOf: recordValue === null ? null : Math.round(recordValue * 100) / 100,
       });
     } catch (e) {
       setMessage(friendlyError(e));
@@ -138,6 +145,12 @@ export function ExamForm({
       </Field>
       <Field label="Mark for each question" hint={total !== null ? `Total: ${total} marks` : undefined}>
         <Input value={mark} onChangeText={setMark} keyboardType="decimal-pad" placeholder="1" />
+      </Field>
+      <Field
+        label="Record out of (optional)"
+        hint={total !== null ? `e.g. 30 for a CA test: a score of ${total} becomes 30. Leave empty to keep the raw score.` : 'e.g. 30 for a CA test. Leave empty to keep the raw score.'}
+      >
+        <Input value={recordOutOf} onChangeText={setRecordOutOf} keyboardType="decimal-pad" placeholder="Raw score" />
       </Field>
       {note ? <Text style={{ fontSize: 13, color: colors.warning, marginBottom: space.md }}>{note}</Text> : null}
       <Button title={submitLabel} icon="checkmark" onPress={submit} loading={busy} />

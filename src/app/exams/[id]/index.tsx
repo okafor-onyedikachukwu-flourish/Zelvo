@@ -5,6 +5,7 @@ import { colors, space } from '../../../components/theme';
 import { Banner, Button, Card, ErrorView, Group, ListRow, LoadingView, Screen, SectionTitle, confirm } from '../../../components/ui';
 import { friendlyError } from '../../../lib/errors';
 import { formatMarks, keyProgress, optionsLabel } from '../../../lib/exams';
+import { deleteExamImages } from '../../../lib/scan/queue';
 import { pageCount } from '../../../lib/sheet/layout';
 import { formatDate } from '../../../lib/sheet/render';
 import { must, supabase } from '../../../lib/supabase';
@@ -14,15 +15,24 @@ async function load(id: string) {
   return must(
     await supabase
       .from('exams')
-      .select('id, title, exam_date, question_count, option_count, mark_per_question, answer_key, classes(name), subjects(name)')
+      .select('id, school_id, title, exam_date, question_count, option_count, mark_per_question, record_out_of, answer_key, classes(name), subjects(name)')
       .eq('id', id)
       .single(),
   );
 }
 
+async function loadAll(id: string) {
+  const [exam, scripts] = await Promise.all([
+    load(id),
+    supabase.from('scripts').select('id', { count: 'exact', head: true }).eq('exam_id', id),
+  ]);
+  if (scripts.error) throw scripts.error;
+  return { ...exam, scriptCount: scripts.count ?? 0 };
+}
+
 export default function ExamDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(id), id);
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => loadAll(id), id);
   const [message, setMessage] = useState<string | null>(null);
 
   if (loading) return <LoadingView />;
@@ -33,8 +43,10 @@ export default function ExamDetail() {
   const pages = pageCount(exam.question_count, exam.option_count);
 
   async function remove() {
-    if (!(await confirm(`Delete "${exam.title}"?`, "Its answer key will be deleted too. This can't be undone."))) return;
+    const extra = exam.scriptCount > 0 ? ` and ${exam.scriptCount} scanned ${exam.scriptCount === 1 ? 'script' : 'scripts'}` : '';
+    if (!(await confirm(`Delete "${exam.title}"?`, `Its answer key${extra} will be deleted too. This can't be undone.`))) return;
     try {
+      await deleteExamImages(exam.school_id, exam.id).catch(() => undefined);
       must(await supabase.from('exams').delete().eq('id', exam.id));
       router.back();
     } catch (e) {
@@ -55,6 +67,7 @@ export default function ExamDetail() {
         <Text style={{ fontSize: 14, color: colors.muted, marginTop: 4 }}>
           {exam.question_count} questions · options {optionsLabel(exam.option_count)} · {formatMarks(mark)} each · total{' '}
           {formatMarks(exam.question_count * mark)}
+          {exam.record_out_of ? ` · recorded out of ${Number(exam.record_out_of)}` : ''}
         </Text>
       </Card>
 
@@ -77,7 +90,18 @@ export default function ExamDetail() {
 
       <SectionTitle>After the exam</SectionTitle>
       <Group>
-        <ListRow icon="scan-outline" title="Scan and mark scripts" subtitle="Coming in the next update" />
+        <ListRow
+          icon="scan-outline"
+          title="Scan scripts"
+          subtitle="Photograph the answer sheets; works without internet"
+          onPress={() => router.push({ pathname: '/exams/[id]/scan', params: { id: exam.id } })}
+        />
+        <ListRow
+          icon="stats-chart-outline"
+          title="Results"
+          subtitle={exam.scriptCount === 0 ? 'No scripts scanned yet' : `${exam.scriptCount} ${exam.scriptCount === 1 ? 'script' : 'scripts'} marked`}
+          onPress={() => router.push({ pathname: '/exams/[id]/results', params: { id: exam.id } })}
+        />
       </Group>
 
       <View style={{ flexDirection: 'row', gap: space.sm, marginTop: space.xl }}>

@@ -9,7 +9,7 @@ async function load(id: string) {
   return must(
     await supabase
       .from('exams')
-      .select('id, title, class_id, subject_id, exam_date, question_count, option_count, mark_per_question, answer_key')
+      .select('id, title, class_id, subject_id, exam_date, question_count, option_count, mark_per_question, record_out_of, answer_key')
       .eq('id', id)
       .single(),
   );
@@ -33,9 +33,10 @@ export default function EditExam() {
         questionCount: exam.question_count,
         optionCount: exam.option_count,
         markPerQuestion: Number(exam.mark_per_question),
+        recordOutOf: exam.record_out_of === null ? null : Number(exam.record_out_of),
       }}
       submitLabel="Save changes"
-      note="If you've already printed answer sheets, changing the number of questions or options means printing them again."
+      note="If you've already printed answer sheets or scanned scripts, changing the number of questions or options means printing and scanning again."
       onSubmit={async (v) => {
         const newKey = resizeKey(exam.answer_key, v.questionCount, v.optionCount);
         const lost = keyProgress(exam.answer_key).set - keyProgress(newKey).set;
@@ -58,6 +59,7 @@ export default function EditExam() {
               question_count: v.questionCount,
               option_count: v.optionCount,
               mark_per_question: v.markPerQuestion,
+              record_out_of: v.recordOutOf,
               answer_key: newKey,
             })
             .eq('id', exam.id)

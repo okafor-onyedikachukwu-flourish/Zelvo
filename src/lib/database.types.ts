@@ -1,4 +1,4 @@
-// Generated from the Supabase schema (stages 1–2). Regenerate after database changes.
+// Generated from the Supabase schema (stages 1–3). Regenerate after database changes.
 
 export type Database = {
   __InternalSupabase: {
@@ -31,6 +31,7 @@ export type Database = {
           mark_per_question: number;
           option_count: number;
           question_count: number;
+          record_out_of: number | null;
           school_id: string;
           subject_id: string;
           title: string;
@@ -46,6 +47,7 @@ export type Database = {
           mark_per_question?: number;
           option_count?: number;
           question_count: number;
+          record_out_of?: number | null;
           school_id: string;
           subject_id: string;
           title: string;
@@ -61,6 +63,7 @@ export type Database = {
           mark_per_question?: number;
           option_count?: number;
           question_count?: number;
+          record_out_of?: number | null;
           school_id?: string;
           subject_id?: string;
           title?: string;
@@ -116,6 +119,60 @@ export type Database = {
           timezone?: string;
         };
         Relationships: [];
+      };
+      scripts: {
+        Row: {
+          answers: string;
+          created_at: string;
+          exam_id: string;
+          id: string;
+          pages_scanned: number[];
+          scanned_by: string | null;
+          school_id: string;
+          student_id: string | null;
+          student_name: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          answers: string;
+          created_at?: string;
+          exam_id: string;
+          id: string;
+          pages_scanned?: number[];
+          scanned_by?: string | null;
+          school_id: string;
+          student_id?: string | null;
+          student_name?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          answers?: string;
+          created_at?: string;
+          exam_id?: string;
+          id?: string;
+          pages_scanned?: number[];
+          scanned_by?: string | null;
+          school_id?: string;
+          student_id?: string | null;
+          student_name?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scripts_exam_id_school_id_fkey';
+            columns: ['exam_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'exams';
+            referencedColumns: ['id', 'school_id'];
+          },
+          {
+            foreignKeyName: 'scripts_student_id_school_id_fkey';
+            columns: ['student_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'students';
+            referencedColumns: ['id', 'school_id'];
+          },
+        ];
       };
       staff: {
         Row: {
@@ -223,6 +280,18 @@ export type Database = {
         Returns: string;
       };
       join_school: { Args: { p_code: string }; Returns: string };
+      record_scan: {
+        Args: {
+          p_answers: string;
+          p_exam_id: string;
+          p_first: number;
+          p_page: number;
+          p_script_id: string;
+          p_student_id: string | null;
+          p_student_name: string | null;
+        };
+        Returns: string;
+      };
       regenerate_invite: { Args: { p_staff_id: string }; Returns: string };
     };
     Enums: { [_ in never]: never };

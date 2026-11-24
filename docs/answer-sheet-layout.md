@@ -76,8 +76,21 @@ bubbleX(option o) = startX + column × columnWidth + 9 + o × 6.2 + 3.1
 Columns are filled left to right, so an exam with fewer questions than `perPage` leaves the right-hand columns
 empty.
 
-## Reading a bubble
+## Reading a page (src/lib/scan)
 
-`tools/omr_check.py` is a working prototype: it fills a rendered sheet, distorts it like a phone photo
-(perspective, uneven light, blur, noise), then finds the squares, straightens the page, reads the QR code and
-decides each answer. On every option count it reads all questions correctly. The stage 3 scanner builds on it.
+The reader runs on the phone, in plain TypeScript, so scanning works without internet:
+
+1. The photo is reduced to at most 1600 px on its longest side and turned into greyscale.
+2. **Corner squares:** a local (adaptive) threshold, then connected dark regions; the square-ish region nearest each
+   corner of the photo is taken. This runs on a half-size copy for speed.
+3. **Orientation:** the page is mapped upright first; if the QR code doesn't read, upside down, then sideways.
+4. **QR code:** the QR area is straightened at 7 px/mm and decoded with jsQR. It must name this exam, and its page count
+   must match the exam's current settings (otherwise the sheets were printed before the exam was changed).
+5. **Bubbles:** for each option, the average brightness inside 1.5 mm of the centre is compared with the paper on a
+   3 mm ring around it. Levels for "empty" and "shaded" are measured on each page, so pencil, pen and lighting all work.
+6. Each question becomes one character: `A`–`F` (sure), `a`–`f` (best guess, teacher should check), `-` (blank),
+   `#` (more than one shaded). Unscanned pages show as `?`.
+7. A straightened copy of the page (3 px/mm, greyscale JPEG, about 90 KB) is kept for checking answers later.
+
+`tools/test` makes realistic photos of filled sheets (skewed, small, upside down, sideways, uneven light, clutter,
+faint marks, rubbed-out and double marks) and runs this exact code on them. Every option count reads correctly.

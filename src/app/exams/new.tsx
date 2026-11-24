@@ -22,6 +22,7 @@ export default function NewExam() {
               question_count: v.questionCount,
               option_count: v.optionCount,
               mark_per_question: v.markPerQuestion,
+              record_out_of: v.recordOutOf,
               answer_key: UNSET.repeat(v.questionCount),
             })
             .select('id')
