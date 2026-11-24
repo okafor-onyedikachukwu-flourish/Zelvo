@@ -5,6 +5,7 @@ export function friendlyError(e: unknown): string {
   const code = err.code ?? '';
 
   if (code === '23505') return 'That name is already in use.';
+  if (code === '23503') return "It's used by an exam, so it can't be deleted.";
   if (code === '42501' || /row-level security|permission denied/i.test(msg)) {
     return 'Only a school admin can do this.';
   }

@@ -10,7 +10,7 @@ No payments.
 ## Build stages
 
 1. **Done:** accounts, schools, staff with join codes, classes, subjects and optional class lists
-2. Exams and answer keys, plus the printable answer sheet (PDF)
+2. **Done:** exams and answer keys, plus the printable answer sheet (PDF)
 3. Scanning, bubble reading, a review screen for unclear answers, and results with export
 4. Timetable: bell times, timetable upload, clash checks and the teacher screens
 5. Alarms: offline scheduling, the full-screen alarm, syncing changes and exam timetable mode
@@ -25,6 +25,13 @@ No payments.
 - Each school's data is kept separate by the database's security rules. A person can belong to more than one school and switch between them.
 - A school always keeps at least one admin.
 
+## How stage 2 works
+
+- Any teacher can create an exam for a class and subject: title, optional date, number of objective questions (up to 1,000), options per question (A–B up to A–F) and the mark for each question.
+- Only the teacher who created an exam and the school's admins can see it, its answer key and (later) its results.
+- The answer key can be tapped in question by question or typed/pasted in one go ("ABDC CADB…" or "1A 2C 3B…"). It saves automatically. ✱ gives everyone the mark for a question.
+- **Answer sheets** (A4 PDF, print or share): *named* sheets carry each student's name from the class list, so scanning needs no handwriting reading; *blank* sheets have boxes for the student to write their name, class and subject. Long exams continue on more pages. The layout is described in `docs/answer-sheet-layout.md`.
+
 ## Project layout
 
 ```
@@ -34,18 +41,25 @@ src/app/                       Screens (Expo Router)
   welcome.tsx                  Set up a school or join one
   create-school.tsx, join-school.tsx
   (tabs)/index.tsx             Home: set-up checklist (admins) or school summary
+  (tabs)/exams.tsx             Exams: your exams (admins also see everyone's)
   (tabs)/school.tsx            School: details, staff, classes, subjects
   (tabs)/account.tsx           Account: switch school, join another, log out
   staff/                       Staff list, add staff, staff member (join code, role)
   classes/                     Class list, class detail, add students (paste or CSV)
   subjects.tsx, school-details.tsx
+  exams/                       New exam, exam detail, edit, answer key, answer sheets
 src/components/                Shared UI
 src/lib/
   supabase.ts, config.ts       Supabase connection
   auth.tsx, school.tsx         Logged-in account and current school
   names.ts                     Reads name lists from pasted text or CSV
   invites.ts                   Join code formatting and sharing
+  exams.ts                     Answer key helpers
+  sheet/layout.ts              Answer sheet measurements (shared with the scanner)
+  sheet/render.ts              Draws the answer sheets as printable HTML/SVG
 supabase/migrations/           Database schema and security rules
+docs/answer-sheet-layout.md    Answer sheet layout for the scanner
+tools/omr_check.py             Prototype: reads a distorted photo of a filled sheet
 ```
 
 ## Build the Android app from your phone (GitHub Codespaces)

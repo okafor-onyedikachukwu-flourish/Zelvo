@@ -1,4 +1,4 @@
-// Generated from the Supabase schema (stage 1). Regenerate after database changes.
+// Generated from the Supabase schema (stages 1–2). Regenerate after database changes.
 
 export type Database = {
   __InternalSupabase: {
@@ -13,6 +13,76 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'classes_school_id_fkey';
+            columns: ['school_id'];
+            isOneToOne: false;
+            referencedRelation: 'schools';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      exams: {
+        Row: {
+          answer_key: string;
+          class_id: string;
+          created_at: string;
+          created_by: string | null;
+          exam_date: string | null;
+          id: string;
+          mark_per_question: number;
+          option_count: number;
+          question_count: number;
+          school_id: string;
+          subject_id: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          answer_key: string;
+          class_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          exam_date?: string | null;
+          id?: string;
+          mark_per_question?: number;
+          option_count?: number;
+          question_count: number;
+          school_id: string;
+          subject_id: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          answer_key?: string;
+          class_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          exam_date?: string | null;
+          id?: string;
+          mark_per_question?: number;
+          option_count?: number;
+          question_count?: number;
+          school_id?: string;
+          subject_id?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'exams_class_id_school_id_fkey';
+            columns: ['class_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'classes';
+            referencedColumns: ['id', 'school_id'];
+          },
+          {
+            foreignKeyName: 'exams_subject_id_school_id_fkey';
+            columns: ['subject_id', 'school_id'];
+            isOneToOne: false;
+            referencedRelation: 'subjects';
+            referencedColumns: ['id', 'school_id'];
+          },
+          {
+            foreignKeyName: 'exams_school_id_fkey';
             columns: ['school_id'];
             isOneToOne: false;
             referencedRelation: 'schools';

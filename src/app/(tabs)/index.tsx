@@ -78,7 +78,7 @@ export default function Home() {
           tone="info"
           icon="sparkles-outline"
           title="Coming next"
-          text="Exam marking with the phone camera, then timetable alarms before every period."
+          text="Scanning and marking scripts with the phone camera, then timetable alarms before every period."
         />
       </View>
     </Screen>

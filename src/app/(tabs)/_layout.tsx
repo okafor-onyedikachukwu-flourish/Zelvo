@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
+import { Pressable } from 'react-native';
 import { colors } from '../../components/theme';
 
 export default function TabsLayout() {
@@ -19,6 +21,18 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="exams"
+        options={{
+          title: 'Exams',
+          tabBarIcon: ({ color, size }) => <Ionicons name="document-text-outline" color={color as string} size={size} />,
+          headerRight: () => (
+            <Pressable onPress={() => router.push('/exams/new')} hitSlop={12} style={{ marginRight: 16 }} accessibilityLabel="New exam">
+              <Ionicons name="add-circle" size={28} color={colors.primary} />
+            </Pressable>
+          ),
         }}
       />
       <Tabs.Screen
