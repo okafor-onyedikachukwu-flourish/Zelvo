@@ -9,7 +9,8 @@ import { PHOTOS } from '../../lib/photos';
 import { useSchool } from '../../lib/school';
 import { scoreScript } from '../../lib/scoring';
 import { formatDate } from '../../lib/sheet/render';
-import { loadMyResults } from '../../lib/studentResults';
+import { loadMyResults, loadMyTimetable } from '../../lib/studentResults';
+import { formatTime, today } from '../../lib/timetable';
 import { supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
@@ -59,7 +60,7 @@ export default function StudentHome() {
   // Confirmed first; otherwise the latest request (waiting for a teacher, or not confirmed).
   const me = studentAccounts.find((a) => a.status === 'approved') ?? studentAccounts[0];
   const confirmed = me?.status === 'approved';
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(loadMyResults, me?.id ?? '');
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => Promise.all([loadMyResults(), loadMyTimetable()]), me?.id ?? '');
   useLightStatusBar();
 
   async function logOut() {
@@ -68,7 +69,11 @@ export default function StudentHome() {
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
-  const results = (data ?? []).map((r) => ({
+  const [resultRows, timetable] = data ?? [[], []];
+  const todays = timetable
+    .filter((l) => l.day === today() && (!me || l.class_id === me.classId))
+    .sort((a, b) => a.period_no - b.period_no);
+  const results = resultRows.map((r) => ({
     ...r,
     score: scoreScript(r.answers, r.answer_key, Number(r.mark_per_question), r.record_out_of === null ? null : Number(r.record_out_of)),
   }));
@@ -148,12 +153,24 @@ export default function StudentHome() {
       )}
 
       <SectionTitle>Today</SectionTitle>
-      <View style={styles.today}>
-        <Text style={{ flex: 1, fontSize: 14, color: colors.muted }}>Your class timetable will show here once your school adds it.</Text>
-        <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: colors.primarySoft }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primaryDark }}>Soon</Text>
-        </View>
+      <View style={styles.todayCard}>
+        {timetable.length === 0 ? (
+          <Text style={{ fontSize: 14, color: colors.muted, paddingVertical: space.md }}>Your class timetable will show here once your school adds it.</Text>
+        ) : todays.length === 0 ? (
+          <Text style={{ fontSize: 14, color: colors.muted, paddingVertical: space.md }}>No lessons today.</Text>
+        ) : (
+          todays.map((l, i) => (
+            <View key={l.period_no} style={[styles.todayRow, i < todays.length - 1 && { borderBottomWidth: 1, borderBottomColor: '#EEF0F5' }]}>
+              <Text style={{ width: 64, fontSize: 15, fontWeight: '800', color: colors.primary }}>{formatTime(l.starts_at)}</Text>
+              <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.text }}>{l.subject}</Text>
+              {l.room ? <Text style={{ fontSize: 13, color: colors.muted }}>{l.room}</Text> : null}
+            </View>
+          ))
+        )}
       </View>
+      {timetable.length > 0 ? (
+        <Button variant="secondary" small icon="calendar-outline" title="See the whole week" onPress={() => router.push('/student/timetable')} />
+      ) : null}
 
       <View style={{ marginTop: space.lg }}>
         <Group>
@@ -225,14 +242,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  today: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    padding: space.lg,
+  todayCard: {
+    paddingHorizontal: space.lg,
+    paddingVertical: space.xs,
     borderRadius: 18,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
   },
+  todayRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 12 },
 });

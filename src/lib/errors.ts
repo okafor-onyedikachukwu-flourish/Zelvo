@@ -4,6 +4,8 @@ export function friendlyError(e: unknown): string {
   const msg = err.message ?? (typeof e === 'string' ? e : 'Something went wrong. Try again.');
   const code = err.code ?? '';
 
+  if (code === '23505' && /lessons_class_slot/.test(msg)) return 'That class already has a lesson at that time.';
+  if (code === '23505' && /lessons_teacher_slot/.test(msg)) return 'That teacher is already teaching another class at that time.';
   if (code === '23505') return 'That name is already in use.';
   if (code === '23503') return "It's used by an exam, so it can't be deleted.";
   if (code === '42501' || /row-level security|permission denied/i.test(msg)) {

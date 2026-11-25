@@ -1,4 +1,6 @@
-// Generated from the Supabase schema (stages 1–3). Regenerate after database changes.
+// Generated from the Supabase schema, then kept up to date by hand. Regenerate after database changes.
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   __InternalSupabase: {
@@ -96,6 +98,75 @@ export type Database = {
           },
         ];
       };
+      lessons: {
+        Row: {
+          class_id: string;
+          created_at: string;
+          day: number;
+          id: string;
+          period_id: string;
+          room: string | null;
+          school_id: string;
+          subject_id: string;
+          teacher_id: string | null;
+        };
+        Insert: {
+          class_id: string;
+          created_at?: string;
+          day: number;
+          id?: string;
+          period_id: string;
+          room?: string | null;
+          school_id: string;
+          subject_id: string;
+          teacher_id?: string | null;
+        };
+        Update: {
+          class_id?: string;
+          created_at?: string;
+          day?: number;
+          id?: string;
+          period_id?: string;
+          room?: string | null;
+          school_id?: string;
+          subject_id?: string;
+          teacher_id?: string | null;
+        };
+        Relationships: [];
+      };
+      periods: {
+        Row: {
+          created_at: string;
+          ends_at: string;
+          id: string;
+          is_break: boolean;
+          label: string;
+          position: number;
+          school_id: string;
+          starts_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at: string;
+          id?: string;
+          is_break?: boolean;
+          label: string;
+          position: number;
+          school_id: string;
+          starts_at: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string;
+          id?: string;
+          is_break?: boolean;
+          label?: string;
+          position?: number;
+          school_id?: string;
+          starts_at?: string;
+        };
+        Relationships: [];
+      };
       schools: {
         Row: {
           country: string | null;
@@ -103,6 +174,7 @@ export type Database = {
           created_by: string | null;
           id: string;
           name: string;
+          school_days: number[];
           timezone: string;
         };
         Insert: {
@@ -111,6 +183,7 @@ export type Database = {
           created_by?: string | null;
           id?: string;
           name: string;
+          school_days?: number[];
           timezone?: string;
         };
         Update: {
@@ -119,6 +192,7 @@ export type Database = {
           created_by?: string | null;
           id?: string;
           name?: string;
+          school_days?: number[];
           timezone?: string;
         };
         Relationships: [];
@@ -433,6 +507,7 @@ export type Database = {
         }[];
       };
       find_schools: { Args: { p_query: string }; Returns: { id: string; name: string; country: string | null }[] };
+      import_lessons: { Args: { p_school: string; p_lessons: Json; p_replace: boolean }; Returns: number };
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
       join_class: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
       join_as_student: { Args: { p_code: string }; Returns: string };
@@ -452,6 +527,22 @@ export type Database = {
           answer_key: string;
           answers: string;
           updated_at: string;
+        }[];
+      };
+      my_timetable: {
+        Args: Record<string, never>;
+        Returns: {
+          school_id: string;
+          class_id: string;
+          day: number;
+          period_no: number;
+          label: string;
+          starts_at: string;
+          ends_at: string;
+          is_break: boolean;
+          subject: string;
+          teacher: string | null;
+          room: string | null;
         }[];
       };
       my_staff_requests: {
@@ -526,6 +617,7 @@ export type Database = {
       };
       request_student_access: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
       send_student_code: { Args: { p_student: string; p_email: string; p_new?: boolean }; Returns: string };
+      set_bell_times: { Args: { p_school: string; p_periods: Json }; Returns: undefined };
       set_invite_email: { Args: { p_staff_id: string; p_email: string | null }; Returns: undefined };
       school_openings: { Args: { p_school: string }; Returns: { has_vp: boolean; full_departments: string[] }[] };
       school_staff_requests: {

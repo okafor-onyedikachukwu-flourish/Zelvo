@@ -4,3 +4,8 @@ import { must, supabase } from './supabase';
 export async function loadMyResults() {
   return must(await supabase.rpc('my_results'));
 }
+
+/** The student's class timetable (lessons only), for every class they've joined. */
+export async function loadMyTimetable() {
+  return must(await supabase.rpc('my_timetable'));
+}

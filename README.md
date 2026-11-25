@@ -12,7 +12,7 @@ No payments.
 1. **Done:** accounts, schools, staff who join and are approved, classes, departments and optional class lists
 2. **Done:** exams and answer keys, plus the printable answer sheet (PDF)
 3. **Done:** scanning on the phone (works offline), a review screen for unclear answers, and results with export
-4. Timetable: bell times, timetable upload, clash checks and the teacher screens
+4. **Done:** timetable: bell times, timetable upload, clash checks and the teacher screens
 5. Alarms: offline scheduling, the full-screen alarm, syncing changes and exam timetable mode
 6. Reading handwritten answers and names (foolscap mode)
 7. Item analysis, a test in a real school, and the release build
@@ -40,6 +40,15 @@ No payments.
 - **Results:** score, percentage and (optionally) the score converted to a "record out of" total, e.g. 40 questions recorded out of 30. Class average, highest and lowest. Export as a spreadsheet (CSV, with every answer) or PDF.
 - **Checking:** answers Zelvo isn't sure of (faint, partly rubbed out) or with two bubbles shaded are marked "Check". The script screen shows a picture of that question from the sheet and lets you tap the right answer. You can also change any answer or the student.
 - Only the exam's creator and the school's admins can see its scripts and page photos.
+
+## How stage 4 works (timetable)
+
+- **Who:** the vice-principal academic and the principal set it up (School → Timetable). Everyone at the school can see it; students see their class's lessons.
+- **Bell times:** one set of periods for every school day (Timetable → Bell times). Quick fill builds them from the first lesson's start, lesson length, number of lessons and up to two breaks; each period can then be renamed, retimed or turned into a break. School days (Mon–Sun) are chosen there too.
+- **Tap it in:** By class → pick a class and a day → tap a period → choose the subject, the teacher (those who teach the subject first; teachers busy elsewhere at that time can't be picked) and an optional room.
+- **Spreadsheet:** Timetable → Spreadsheet → get the Excel template (columns Day, Period, Class, Subject, Teacher, Room, plus a sheet of the exact names). Upload a filled .xlsx or .csv: Zelvo matches days, periods (name, number or start time), classes, subjects and teachers (any word order, Mr/Mrs ignored), lists rows it can't use, then replaces the timetable or adds the lessons that don't clash.
+- **Clash checks** (also enforced by the database): a class has one lesson at a time, a teacher teaches one class at a time, no lessons in breaks or on closed days. Removing a period or closing a day removes its lessons.
+- **Teachers:** Home shows the next lesson (e.g. "10:40 · Mathematics · JSS 2B, in 25 min"); Timetable → My lessons shows their week. Students see today's lessons on their dashboard and the whole week under "See the whole week".
 
 ## Roles
 

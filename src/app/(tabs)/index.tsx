@@ -8,12 +8,13 @@ import { Button, ErrorView, Group, ListRow, LoadingView, SectionTitle, type Icon
 import { PHOTOS } from '../../lib/photos';
 import { roleLabel, useCurrentSchool } from '../../lib/school';
 import { formatDate } from '../../lib/sheet/render';
+import { formatTime, loadTimetable, nextLesson, whenText } from '../../lib/timetable';
 import { must, supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
 
 type Counts = { classes: number; subjects: number; students: number; staff: number; requests: number; staffRequests: number };
 
-async function load(schoolId: string, isAdmin: boolean) {
+async function load(schoolId: string, isAdmin: boolean, staffId: string) {
   const count = async (table: 'classes' | 'subjects' | 'students') => {
     const res = await supabase.from(table).select('id', { count: 'exact', head: true }).eq('school_id', schoolId);
     if (res.error) throw res.error;
@@ -24,7 +25,7 @@ async function load(schoolId: string, isAdmin: boolean) {
     if (res.error) throw res.error;
     return res.count ?? 0;
   };
-  const [classes, subjects, students, staff, requests, staffRequests, recent] = await Promise.all([
+  const [classes, subjects, students, staff, requests, staffRequests, recent, tt] = await Promise.all([
     count('classes'),
     count('subjects'),
     count('students'),
@@ -38,9 +39,24 @@ async function load(schoolId: string, isAdmin: boolean) {
       .order('created_at', { ascending: false })
       .limit(3)
       .then(must),
+    loadTimetable(schoolId),
   ]);
   const counts: Counts = { classes, subjects, students, staff: staff.length, requests, staffRequests };
-  return { counts, recent };
+  // My next lesson, for the timetable card.
+  const mine = tt.lessons
+    .filter((l) => l.teacher_id === staffId)
+    .map((l) => {
+      const p = tt.periods.find((x) => x.id === l.period_id)!;
+      return {
+        day: l.day,
+        starts_at: p.starts_at,
+        ends_at: p.ends_at,
+        what: `${tt.subjects.find((x) => x.id === l.subject_id)?.name ?? ''} · ${tt.classes.find((x) => x.id === l.class_id)?.name ?? ''}`,
+        room: l.room,
+      };
+    });
+  const next = nextLesson(mine, tt.days);
+  return { counts, recent, next, hasBells: tt.periods.length > 0, lessonCount: tt.lessons.length };
 }
 
 function greeting() {
@@ -49,13 +65,25 @@ function greeting() {
 }
 
 export default function Home() {
-  const { school, schoolId, fullName, role, headTitle, isAdmin, isHod } = useCurrentSchool();
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(schoolId, isAdmin), `${schoolId}:${isAdmin}`);
+  const { school, schoolId, staffId, fullName, role, headTitle, isAdmin, isHod } = useCurrentSchool();
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => load(schoolId, isAdmin, staffId), `${schoolId}:${isAdmin}:${staffId}`);
   useLightStatusBar();
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
-  const { counts: c, recent } = data!;
+  const { counts: c, recent, next, hasBells, lessonCount } = data!;
+  const lessonTitle = next
+    ? `${formatTime(next.lesson.starts_at)} · ${next.lesson.what}`
+    : isAdmin && !hasBells
+      ? 'Set up the timetable'
+      : 'School timetable';
+  const lessonText = next
+    ? [next.isNow ? 'Happening now' : whenText(next.inMinutes, next.lesson.day), next.lesson.room].filter(Boolean).join(' · ')
+    : isAdmin && !hasBells
+      ? 'Start with the bell times, then add the lessons or upload a spreadsheet.'
+      : lessonCount > 0
+        ? 'See every class and teacher.'
+        : "The timetable hasn't been filled in yet.";
 
   const actions: { icon: IconName; label: string; bg: string; fg: string; href: Href }[] = [
     { icon: 'add', label: 'New exam', bg: colors.primarySoft, fg: colors.primary, href: '/exams/new' },
@@ -127,18 +155,21 @@ export default function Home() {
           ))}
         </View>
 
-        <View style={styles.lesson}>
+        <Pressable
+          onPress={() => router.push(isAdmin && !hasBells ? '/timetable/bells' : '/timetable')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.lesson, pressed && { opacity: 0.85 }]}
+        >
           <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="alarm-outline" size={22} color={colors.primary} />
+            <Ionicons name={next ? 'alarm-outline' : 'calendar-outline'} size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>Timetable alarms</Text>
-            <Text style={{ fontSize: 13, color: colors.muted }}>Your next lesson and its alarm will show here.</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.muted, letterSpacing: 0.4 }}>{next ? 'NEXT LESSON' : 'TIMETABLE'}</Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{lessonTitle}</Text>
+            <Text style={{ fontSize: 13, color: colors.muted }}>{lessonText}</Text>
           </View>
-          <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: colors.primarySoft }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primaryDark }}>Soon</Text>
-          </View>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.faint} />
+        </Pressable>
 
         {recent.length > 0 ? (
           <>

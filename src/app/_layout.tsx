@@ -78,6 +78,7 @@ function RootNavigator() {
 
       <Stack.Protected guard={isStudent}>
         <Stack.Screen name="student/index" options={{ headerShown: false }} />
+        <Stack.Screen name="student/timetable" options={{ title: 'My timetable' }} />
         <Stack.Screen name="student/result/[examId]" options={{ title: 'Result' }} />
       </Stack.Protected>
 
@@ -102,6 +103,10 @@ function RootNavigator() {
         <Stack.Screen name="classes/[id]" options={{ title: 'Class' }} />
         <Stack.Screen name="classes/import" options={{ title: 'Add students', presentation: 'modal' }} />
         <Stack.Screen name="subjects" options={{ title: 'Departments' }} />
+        <Stack.Screen name="timetable/index" options={{ title: 'Timetable' }} />
+        <Stack.Screen name="timetable/bells" options={{ title: 'Bell times' }} />
+        <Stack.Screen name="timetable/lesson" options={{ title: 'Lesson', presentation: 'modal' }} />
+        <Stack.Screen name="timetable/upload" options={{ title: 'Upload a timetable' }} />
         <Stack.Screen name="student-requests" options={{ title: 'Students on Zelvo' }} />
         <Stack.Screen name="performance" options={{ title: 'Performance' }} />
         <Stack.Screen name="exams/new" options={{ title: 'New exam', presentation: 'modal' }} />
