@@ -5,10 +5,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BarChart, ProgressBar } from '../../components/BarChart';
 import { PhotoScreen, useLightStatusBar } from '../../components/Photo';
 import { colors, radius, space } from '../../components/theme';
-import { Badge, Button, Chip, EmptyState, ErrorView, Input, LoadingView, SectionTitle, type IconName } from '../../components/ui';
+import { Badge, Button, Chip, EmptyState, ErrorView, Group, Input, ListRow, LoadingView, SectionTitle, confirm, type IconName } from '../../components/ui';
 import { accountName, useAuth } from '../../lib/auth';
 import { greeting, loadOwnerDashboard, MINUTES_SAVED_PER_SCRIPT, nextMilestone, sinceText, type Week } from '../../lib/owner';
 import { PHOTOS } from '../../lib/photos';
+import { useSchool } from '../../lib/school';
+import { supabase } from '../../lib/supabase';
 import { currentBuild } from '../../lib/updates';
 import { useLoad } from '../../lib/useLoad';
 
@@ -24,13 +26,25 @@ const plural = (n: number, one: string, many: string) => `${n.toLocaleString()} 
 
 export default function OwnerDashboard() {
   const { session } = useAuth();
+  const { current, studentAccounts } = useSchool();
   const { data, loading, error, reload, refresh, refreshing } = useLoad(loadOwnerDashboard, 'owner');
   const [metric, setMetric] = useState<Metric>(METRICS[0]);
   const [query, setQuery] = useState('');
   useLightStatusBar();
 
+  async function logOut() {
+    if (await confirm('Log out?', 'You can log back in with your email and password.', 'Log out')) await supabase.auth.signOut();
+  }
+
   if (loading) return <LoadingView />;
-  if (error && !data) return <ErrorView message={error} onRetry={reload} />;
+  if (error && !data) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ErrorView message={error} onRetry={reload} />
+        <Button variant="ghost" icon="log-out-outline" title="Log out" onPress={logOut} style={{ marginBottom: 48 }} />
+      </View>
+    );
+  }
   const { stats, schools, announcements } = data!;
   const t = stats.totals;
   const weeks = stats.weekly ?? [];
@@ -57,9 +71,16 @@ export default function OwnerDashboard() {
             <View style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: radius.pill, backgroundColor: colors.accent }}>
               <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>Zelvo owner</Text>
             </View>
-            <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} style={styles.close}>
-              <Ionicons name="close" size={20} color="#FFFFFF" />
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              <Pressable onPress={logOut} accessibilityRole="button" accessibilityLabel="Log out" hitSlop={10} style={styles.close}>
+                <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+              </Pressable>
+              {router.canGoBack() ? (
+                <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} style={styles.close}>
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </Pressable>
+              ) : null}
+            </View>
           </View>
           <Text style={{ fontSize: 15, color: '#E4E2FF', fontWeight: '500' }}>
             {greeting()}
@@ -207,6 +228,16 @@ export default function OwnerDashboard() {
           </Pressable>
         ))
       )}
+
+      <SectionTitle>Your account</SectionTitle>
+      <Group>
+        {current ? (
+          <ListRow icon="business-outline" title={`Back to ${current.school.name}`} onPress={() => router.replace('/')} />
+        ) : studentAccounts.length === 0 ? (
+          <ListRow icon="enter-outline" title="Join or set up a school with this account" onPress={() => router.push('/welcome')} />
+        ) : null}
+        <ListRow icon="log-out-outline" title="Log out" subtitle={session?.user.email} onPress={logOut} />
+      </Group>
 
       <Text style={[styles.foot, { textAlign: 'center', marginTop: space.lg }]}>
         Counts only. Scores, answers and student names stay private to each school.

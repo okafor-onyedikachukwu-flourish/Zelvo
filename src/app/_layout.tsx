@@ -72,9 +72,13 @@ function RootNavigator() {
         <Stack.Screen name="sign-up" options={{ title: '' }} />
       </Stack.Protected>
 
-      {/* Open whether or not someone is logged in. */}
-      <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
-      <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
+      {/* Someone who can't open the screen they're on is sent to the first open screen below,
+          so the order matters: the owner's dashboard comes before "Who are you?". */}
+      <Stack.Protected guard={signedIn && isOwner}>
+        <Stack.Screen name="owner/index" options={{ headerShown: false }} />
+        <Stack.Screen name="owner/school/[id]" options={{ title: 'School' }} />
+        <Stack.Screen name="owner/announcements" options={{ title: 'Announcements' }} />
+      </Stack.Protected>
 
       <Stack.Protected guard={isSuspended}>
         <Stack.Screen name="school-suspended" options={{ headerShown: false }} />
@@ -102,12 +106,6 @@ function RootNavigator() {
         <Stack.Screen name="student/join" options={{ title: 'Student' }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={signedIn && isOwner}>
-        <Stack.Screen name="owner/index" options={{ headerShown: false }} />
-        <Stack.Screen name="owner/school/[id]" options={{ title: 'School' }} />
-        <Stack.Screen name="owner/announcements" options={{ title: 'Announcements' }} />
-      </Stack.Protected>
-
       <Stack.Protected guard={hasSchool}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="school-details" options={{ title: 'School details' }} />
@@ -132,6 +130,10 @@ function RootNavigator() {
         <Stack.Screen name="exams/[id]/results" options={{ title: 'Results' }} />
         <Stack.Screen name="exams/[id]/script/[scriptId]" options={{ title: 'Script' }} />
       </Stack.Protected>
+
+      {/* Open whether or not someone is logged in. */}
+      <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
+      <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
     </Stack>
   );
 }
