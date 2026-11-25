@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { PhotoScreen, useLightStatusBar } from '../../components/Photo';
+import { AnnouncementBanner } from '../../components/AnnouncementBanner';
 import { UpdateBanner } from '../../components/UpdateBanner';
 import { colors, radius, space } from '../../components/theme';
 import { Banner, Button, EmptyState, ErrorView, Group, ListRow, LoadingView, SectionTitle, confirm } from '../../components/ui';
@@ -97,6 +98,15 @@ export default function StudentHome() {
       }
     >
       <UpdateBanner />
+      <AnnouncementBanner />
+      {me?.schoolSuspended ? (
+        <Banner
+          tone="warning"
+          icon="pause-circle-outline"
+          title={`${me.schoolName} is paused on Zelvo`}
+          text="Results and the timetable can't be opened for now. Nothing has been deleted."
+        />
+      ) : null}
 
       {me?.status === 'pending' ? (
         <Banner

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AnnouncementBanner } from '../components/AnnouncementBanner';
 import { colors, space } from '../components/theme';
 import { Banner, Brand, Button, Card, Screen, confirm } from '../components/ui';
 import { friendlyError } from '../lib/errors';
@@ -41,6 +42,7 @@ export default function StaffWaiting() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen refreshing={busy === 'check'} onRefresh={check}>
         <Brand />
+        <AnnouncementBanner />
         {message ? <Banner tone="danger" icon="alert-circle" title={message} /> : null}
         {request?.status === 'declined' ? (
           <Banner

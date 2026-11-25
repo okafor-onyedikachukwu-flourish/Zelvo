@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AnnouncementBanner } from '../components/AnnouncementBanner';
 import { OptionCard } from '../components/AuthParts';
 import { PhotoCard } from '../components/Photo';
 import { colors, space } from '../components/theme';
@@ -28,6 +29,7 @@ export default function Welcome() {
         <Text style={{ fontSize: 30, lineHeight: 36, fontWeight: '800', color: colors.text, letterSpacing: -0.6, marginTop: space.md, marginBottom: space.lg }}>
           Who are you?
         </Text>
+        <AnnouncementBanner />
         <PhotoCard photo={PHOTOS.head} title="Head of school" text="Principal or vice-principal academic" onPress={() => router.push('/join/head')} />
         <PhotoCard photo={PHOTOS.staff} tone="accent" title="Staff" text="Head of department or teacher" onPress={() => router.push('/join/staff')} />
         <PhotoCard photo={PHOTOS.student} tone="success" title="Student" text="See your results and timetable" onPress={() => router.push('/student/join')} />

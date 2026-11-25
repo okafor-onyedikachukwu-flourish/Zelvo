@@ -8,6 +8,36 @@ export type Database = {
   };
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          ends_at: string | null;
+          id: string;
+          stopped_at: string | null;
+          title: string;
+        };
+        Insert: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          ends_at?: string | null;
+          id?: string;
+          stopped_at?: string | null;
+          title: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          ends_at?: string | null;
+          id?: string;
+          stopped_at?: string | null;
+          title?: string;
+        };
+        Relationships: [];
+      };
       classes: {
         Row: { created_at: string; id: string; name: string; school_id: string };
         Insert: { created_at?: string; id?: string; name: string; school_id: string };
@@ -175,6 +205,8 @@ export type Database = {
           id: string;
           name: string;
           school_days: number[];
+          suspended_at: string | null;
+          suspended_reason: string | null;
           timezone: string;
         };
         Insert: {
@@ -184,6 +216,8 @@ export type Database = {
           id?: string;
           name: string;
           school_days?: number[];
+          suspended_at?: string | null;
+          suspended_reason?: string | null;
           timezone?: string;
         };
         Update: {
@@ -193,6 +227,8 @@ export type Database = {
           id?: string;
           name?: string;
           school_days?: number[];
+          suspended_at?: string | null;
+          suspended_reason?: string | null;
           timezone?: string;
         };
         Relationships: [];
@@ -569,8 +605,11 @@ export type Database = {
           typed_name: string;
           student_name: string | null;
           status: string;
+          school_suspended: boolean;
         }[];
       };
+      owner_school: { Args: { p_school: string }; Returns: Json };
+      owner_stats: { Args: Record<string, never>; Returns: Json };
       peek_code: {
         Args: { p_code: string };
         Returns: {
@@ -596,8 +635,11 @@ export type Database = {
           student_accounts: number;
           exams: number;
           scripts: number;
+          suspended: boolean;
+          last_active: string | null;
         }[];
       };
+      record_activity: { Args: { p_build: number | null; p_platform: string }; Returns: undefined };
       record_scan: {
         Args: {
           p_answers: string;
@@ -617,6 +659,7 @@ export type Database = {
       };
       request_student_access: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
       send_student_code: { Args: { p_student: string; p_email: string; p_new?: boolean }; Returns: string };
+      set_school_suspended: { Args: { p_school: string; p_suspend: boolean; p_reason?: string | null }; Returns: undefined };
       set_bell_times: { Args: { p_school: string; p_periods: Json }; Returns: undefined };
       set_invite_email: { Args: { p_staff_id: string; p_email: string | null }; Returns: undefined };
       school_openings: { Args: { p_school: string }; Returns: { has_vp: boolean; full_departments: string[] }[] };

@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '../components/theme';
 import { ErrorView, LoadingView } from '../components/ui';
+import { recordDailyUse } from '../lib/activity';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { syncScans } from '../lib/scan/queue';
 import { SchoolProvider, useSchool } from '../lib/school';
@@ -31,8 +32,12 @@ function RootNavigator() {
   useEffect(() => {
     if (!userId) return;
     syncScans().catch(() => undefined);
+    recordDailyUse(userId);
     const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') syncScans().catch(() => undefined);
+      if (s === 'active') {
+        syncScans().catch(() => undefined);
+        recordDailyUse(userId);
+      }
     });
     return () => sub.remove();
   }, [userId]);
@@ -41,12 +46,15 @@ function RootNavigator() {
   if (session && !current && error) return <ErrorView message={error} onRetry={refresh} />;
 
   const signedIn = !!session;
-  const hasSchool = signedIn && !!current;
+  const isMember = signedIn && !!current;
+  // The owner of Zelvo can suspend a school: its staff then see only a notice.
+  const isSuspended = isMember && !!current?.school.suspended_at;
+  const hasSchool = isMember && !isSuspended;
   // Staff come first: an account that works at a school always sees the staff app.
   // Students go straight to their dashboard, even before a teacher confirms them.
-  const isStudent = signedIn && !hasSchool && studentAccounts.length > 0;
+  const isStudent = signedIn && !isMember && studentAccounts.length > 0;
   // Staff (and the vice-principal) wait for the principal to approve them.
-  const isStaffWaiting = signedIn && !hasSchool && !isStudent && staffRequests.length > 0;
+  const isStaffWaiting = signedIn && !isMember && !isStudent && staffRequests.length > 0;
 
   return (
     <Stack
@@ -68,7 +76,11 @@ function RootNavigator() {
       <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
       <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
 
-      <Stack.Protected guard={signedIn && !hasSchool && !isStudent && !isStaffWaiting}>
+      <Stack.Protected guard={isSuspended}>
+        <Stack.Screen name="school-suspended" options={{ headerShown: false }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={signedIn && !isMember && !isStudent && !isStaffWaiting}>
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
       </Stack.Protected>
 
@@ -91,7 +103,9 @@ function RootNavigator() {
       </Stack.Protected>
 
       <Stack.Protected guard={signedIn && isOwner}>
-        <Stack.Screen name="owner" options={{ title: 'Zelvo owner dashboard' }} />
+        <Stack.Screen name="owner/index" options={{ headerShown: false }} />
+        <Stack.Screen name="owner/school/[id]" options={{ title: 'School' }} />
+        <Stack.Screen name="owner/announcements" options={{ title: 'Announcements' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={hasSchool}>

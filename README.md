@@ -68,6 +68,20 @@ Everyone signs up with their own email (or Google). Right after signing up, Zelv
 - A student's typed name is matched to the class list (any order or capitals). If it isn't on the list, the teacher taps **Add to list & confirm**.
 - Only an exam's creator or a head of school can change an exam or its scripts. Students see results only after the teacher switches on **Students can see results**.
 
+## Owner dashboard
+
+Signed in as the owner (vynkcontact01@gmail.com): Account → Zelvo owner dashboard.
+
+- **Uplifting by design:** a photo header that says what Zelvo has done so far, a "next milestone" bar (1, 3, 5, 10, 25… schools), this week's numbers with "more than last week" in green (a quiet week is shown in grey, never red), and an estimate of marking time saved (2 minutes a script).
+- **Activity:** the app records once a day that an account used it, and on which build (`app_activity`, via `record_activity`). This gives people active today, this week and in the last 30 days.
+- **Growth:** new accounts, people using Zelvo, scripts marked and new schools, week by week for 12 weeks.
+- **App versions:** which build people used most recently in the last 30 days, and how many are on an older one.
+- **Schools:** each with country, last activity and counts; tap for setup progress (departments, classes, staff, bell times, timetable, first exam, scripts), contacts (principal / vice-principal email) and suspending.
+- **Suspend a school:** its staff see a "paused" screen, students see a notice; no data is shown or changed, nothing is deleted, nobody can join it, and it disappears from school search. Lifting it restores everything.
+- **Announcements:** a title and short message shown on everyone's Home (and the student dashboard and Who are you?) until a chosen date or until stopped; each person can dismiss it.
+
+Still counts only: no scores, answers or student names.
+
 ## Signing up and logging in
 
 - The first screen shows what Zelvo does, with **Create an account** and **Log in**.

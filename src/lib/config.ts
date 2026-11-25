@@ -6,3 +6,6 @@ export const SUPABASE_URL =
 
 export const SUPABASE_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_KEY ?? 'sb_publishable_7pBz0kFATiwLbr5GdRusog_cflE8bnJ';
+
+/** Where people can reach the Zelvo team (e.g. about a suspended school). */
+export const SUPPORT_EMAIL = 'vynkcontact01@gmail.com';

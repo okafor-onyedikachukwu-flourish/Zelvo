@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ProgressBar } from '../../components/BarChart';
 import { PhotoScreen, useLightStatusBar } from '../../components/Photo';
 import { colors, radius, space } from '../../components/theme';
+import { AnnouncementBanner } from '../../components/AnnouncementBanner';
 import { UpdateBanner } from '../../components/UpdateBanner';
 import { Button, ErrorView, Group, ListRow, LoadingView, SectionTitle, type IconName } from '../../components/ui';
 import { PHOTOS } from '../../lib/photos';
@@ -123,6 +125,7 @@ export default function Home() {
         }
       >
         <UpdateBanner />
+        <AnnouncementBanner />
 
         {c.staffRequests > 0 ? (
           <Nudge
@@ -191,6 +194,7 @@ export default function Home() {
         {isAdmin ? (
           <>
             <SectionTitle>Set up your school</SectionTitle>
+            <SetupProgress done={[c.classes > 0, c.subjects > 0, c.staff > 1, hasBells, lessonCount > 0].filter(Boolean).length} of={5} />
             <Group>
               <Step done={c.classes > 0} title="Add classes" detail={plural(c.classes, 'class', 'classes')} href="/classes" />
               <Step
@@ -204,6 +208,13 @@ export default function Home() {
                 title="Approve your staff"
                 detail={`${plural(c.staff, 'person', 'people')} on Zelvo. Staff join from their own phones.`}
                 href="/staff"
+              />
+              <Step done={hasBells} title="Set the bell times" detail="When each period starts and ends." href="/timetable/bells" />
+              <Step
+                done={lessonCount > 0}
+                title="Fill in the timetable"
+                detail={lessonCount > 0 ? `${plural(lessonCount, 'lesson', 'lessons')} a week` : 'Tap it in, or upload a spreadsheet.'}
+                href="/timetable"
               />
               <Step
                 done={c.students > 0}
@@ -225,6 +236,19 @@ export default function Home() {
         )}
       </PhotoScreen>
     </>
+  );
+}
+
+/** "3 of 5 done", with a bar and a kind word. */
+function SetupProgress({ done, of }: { done: number; of: number }) {
+  const text = done === of ? 'All set up. Well done!' : done === 0 ? "Let's get started." : done >= of - 1 ? 'Nearly there!' : 'Good progress.';
+  return (
+    <View style={{ marginBottom: space.md, gap: 6 }}>
+      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+        {done} of {of} done · {text}
+      </Text>
+      <ProgressBar progress={done / of} color={colors.success} />
+    </View>
   );
 }
 

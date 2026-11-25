@@ -19,7 +19,7 @@ export type Membership = {
   /** The subject a head of department is responsible for. */
   subjectId: string | null;
   fullName: string;
-  school: { id: string; name: string; country: string | null; timezone: string };
+  school: { id: string; name: string; country: string | null; timezone: string; suspended_at?: string | null; suspended_reason?: string | null };
 };
 
 export type StudentAccount = {
@@ -31,6 +31,8 @@ export type StudentAccount = {
   typedName: string;
   studentName: string | null;
   status: 'pending' | 'approved' | 'declined';
+  /** The owner of Zelvo has suspended this school. */
+  schoolSuspended?: boolean;
 };
 
 /** A request to join a school as staff, waiting for the principal or vice-principal. */
@@ -112,7 +114,7 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
     const [staffRes, studentRes, ownerRes, requestRes] = await Promise.all([
       supabase
         .from('staff')
-        .select('id, role, head_title, full_name, subject_id, schools(id, name, country, timezone)')
+        .select('id, role, head_title, full_name, subject_id, schools(id, name, country, timezone, suspended_at, suspended_reason)')
         .eq('user_id', userId)
         .order('created_at'),
       supabase.rpc('my_student_accounts'),
@@ -159,6 +161,7 @@ function AccountSchools({ userId, children }: { userId: string | null; children:
         typedName: a.typed_name,
         studentName: a.student_name,
         status: a.status === 'approved' ? 'approved' : a.status === 'declined' ? 'declined' : 'pending',
+        schoolSuspended: !!a.school_suspended,
       })),
       staffRequests: (requestRes.data ?? []).map((r) => ({
         id: r.id,
