@@ -82,6 +82,7 @@ export default function Account() {
 
       <SectionTitle>App</SectionTitle>
       <Group>
+        <ListRow icon="alarm-outline" title="Lesson alarms" subtitle="When to ring, holidays, and a test alarm" onPress={() => router.push('/alarms')} />
         <ListRow
           icon="arrow-up-circle-outline"
           title="Check for updates"

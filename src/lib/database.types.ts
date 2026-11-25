@@ -128,6 +128,81 @@ export type Database = {
           },
         ];
       };
+      exam_periods: {
+        Row: {
+          created_at: string;
+          ends_on: string;
+          id: string;
+          lessons_stop: boolean;
+          name: string;
+          school_id: string;
+          starts_on: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_on: string;
+          id?: string;
+          lessons_stop?: boolean;
+          name: string;
+          school_id: string;
+          starts_on: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_on?: string;
+          id?: string;
+          lessons_stop?: boolean;
+          name?: string;
+          school_id?: string;
+          starts_on?: string;
+        };
+        Relationships: [];
+      };
+      exam_papers: {
+        Row: {
+          class_id: string;
+          created_at: string;
+          day: string;
+          ends_at: string;
+          exam_period_id: string;
+          id: string;
+          invigilator_id: string | null;
+          paper: string | null;
+          room: string | null;
+          school_id: string;
+          starts_at: string;
+          subject_id: string;
+        };
+        Insert: {
+          class_id: string;
+          created_at?: string;
+          day: string;
+          ends_at: string;
+          exam_period_id: string;
+          id?: string;
+          invigilator_id?: string | null;
+          paper?: string | null;
+          room?: string | null;
+          school_id: string;
+          starts_at: string;
+          subject_id: string;
+        };
+        Update: {
+          class_id?: string;
+          created_at?: string;
+          day?: string;
+          ends_at?: string;
+          exam_period_id?: string;
+          id?: string;
+          invigilator_id?: string | null;
+          paper?: string | null;
+          room?: string | null;
+          school_id?: string;
+          starts_at?: string;
+          subject_id?: string;
+        };
+        Relationships: [];
+      };
       lessons: {
         Row: {
           class_id: string;
@@ -543,6 +618,10 @@ export type Database = {
         }[];
       };
       find_schools: { Args: { p_query: string }; Returns: { id: string; name: string; country: string | null }[] };
+      save_exam_sitting: {
+        Args: { p_school: string; p_period: string; p_replace: string[] | null; p_sitting: Json; p_classes: string[] };
+        Returns: number;
+      };
       import_lessons: { Args: { p_school: string; p_lessons: Json; p_replace: boolean }; Returns: number };
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
       join_class: { Args: { p_school: string; p_class: string; p_name: string }; Returns: string };
@@ -563,6 +642,20 @@ export type Database = {
           answer_key: string;
           answers: string;
           updated_at: string;
+        }[];
+      };
+      my_exam_papers: {
+        Args: Record<string, never>;
+        Returns: {
+          school_id: string;
+          class_id: string;
+          period_name: string;
+          day: string;
+          starts_at: string;
+          ends_at: string;
+          subject: string;
+          paper: string | null;
+          room: string | null;
         }[];
       };
       my_timetable: {

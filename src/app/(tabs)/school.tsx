@@ -53,6 +53,7 @@ export default function SchoolTab() {
         <ListRow icon="people-outline" title="Classes and students" subtitle={`${c.classes} classes`} onPress={() => router.push('/classes')} />
         <ListRow icon="book-outline" title="Departments" subtitle={`${c.subjects} departments`} onPress={() => router.push('/subjects')} />
         <ListRow icon="calendar-outline" title="Timetable" subtitle="Bell times and lessons" onPress={() => router.push('/timetable')} />
+        <ListRow icon="document-text-outline" title="Exam timetable" subtitle="Exam dates, papers and invigilators" onPress={() => router.push('/exam-timetable')} />
         <ListRow
           icon="school-outline"
           title="Students on Zelvo"

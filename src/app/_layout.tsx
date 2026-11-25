@@ -9,6 +9,7 @@ import { recordDailyUse } from '../lib/activity';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { syncScans } from '../lib/scan/queue';
 import { SchoolProvider, useSchool } from '../lib/school';
+import { useAlarms } from '../lib/useAlarms';
 
 export default function RootLayout() {
   return (
@@ -27,6 +28,8 @@ function RootNavigator() {
   const { session, loading: authLoading } = useAuth();
   const { loading, current, error, refresh, studentAccounts, staffRequests, isOwner } = useSchool();
   const userId = session?.user.id;
+  // Lesson alarms: kept up to date, and the alarm screen opens when one rings.
+  useAlarms(!authLoading && !(session && loading));
 
   // Send scans saved offline whenever the app opens or comes back to the front.
   useEffect(() => {
@@ -95,6 +98,7 @@ function RootNavigator() {
       <Stack.Protected guard={isStudent}>
         <Stack.Screen name="student/index" options={{ headerShown: false }} />
         <Stack.Screen name="student/timetable" options={{ title: 'My timetable' }} />
+        <Stack.Screen name="student/exams" options={{ title: 'My exams' }} />
         <Stack.Screen name="student/result/[examId]" options={{ title: 'Result' }} />
       </Stack.Protected>
 
@@ -119,6 +123,11 @@ function RootNavigator() {
         <Stack.Screen name="timetable/bells" options={{ title: 'Bell times' }} />
         <Stack.Screen name="timetable/lesson" options={{ title: 'Lesson', presentation: 'modal' }} />
         <Stack.Screen name="timetable/upload" options={{ title: 'Upload a timetable' }} />
+        <Stack.Screen name="alarms" options={{ title: 'Lesson alarms' }} />
+        <Stack.Screen name="exam-timetable/index" options={{ title: 'Exam timetable' }} />
+        <Stack.Screen name="exam-timetable/[id]" options={{ title: 'Exam period' }} />
+        <Stack.Screen name="exam-timetable/period" options={{ title: 'Exam period', presentation: 'modal' }} />
+        <Stack.Screen name="exam-timetable/paper" options={{ title: 'Exam paper', presentation: 'modal' }} />
         <Stack.Screen name="student-requests" options={{ title: 'Students on Zelvo' }} />
         <Stack.Screen name="performance" options={{ title: 'Performance' }} />
         <Stack.Screen name="exams/new" options={{ title: 'New exam', presentation: 'modal' }} />
@@ -134,6 +143,7 @@ function RootNavigator() {
       {/* Open whether or not someone is logged in. */}
       <Stack.Screen name="forgot-password" options={{ title: 'Forgot password' }} />
       <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
+      <Stack.Screen name="alarm" options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }} />
     </Stack>
   );
 }

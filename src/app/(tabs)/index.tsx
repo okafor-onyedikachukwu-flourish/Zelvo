@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ProgressBar } from '../../components/BarChart';
 import { PhotoScreen, useLightStatusBar } from '../../components/Photo';
 import { colors, radius, space } from '../../components/theme';
 import { AnnouncementBanner } from '../../components/AnnouncementBanner';
 import { UpdateBanner } from '../../components/UpdateBanner';
 import { Button, ErrorView, Group, ListRow, LoadingView, SectionTitle, type IconName } from '../../components/ui';
+import { checkReadiness, getAlarmSettings, isoDate, leadLabel } from '../../lib/alarms';
+import { dateLabel, periodStatus, rangeLabel, type ExamPeriod } from '../../lib/examTimetable';
 import { PHOTOS } from '../../lib/photos';
 import { roleLabel, useCurrentSchool } from '../../lib/school';
 import { formatDate } from '../../lib/sheet/render';
@@ -27,7 +29,8 @@ async function load(schoolId: string, isAdmin: boolean, staffId: string) {
     if (res.error) throw res.error;
     return res.count ?? 0;
   };
-  const [classes, subjects, students, staff, requests, staffRequests, recent, tt] = await Promise.all([
+  const todayIso = isoDate(new Date());
+  const [classes, subjects, students, staff, requests, staffRequests, recent, tt, examPeriods, alarm, readiness] = await Promise.all([
     count('classes'),
     count('subjects'),
     count('students'),
@@ -42,6 +45,16 @@ async function load(schoolId: string, isAdmin: boolean, staffId: string) {
       .limit(3)
       .then(must),
     loadTimetable(schoolId),
+    supabase
+      .from('exam_periods')
+      .select('id, name, starts_on, ends_on, lessons_stop')
+      .eq('school_id', schoolId)
+      .gte('ends_on', todayIso)
+      .order('starts_on')
+      .limit(1)
+      .then(must),
+    getAlarmSettings(),
+    Platform.OS === 'android' ? checkReadiness().catch(() => null) : Promise.resolve(null),
   ]);
   const counts: Counts = { classes, subjects, students, staff: staff.length, requests, staffRequests };
   // My next lesson, for the timetable card.
@@ -58,7 +71,40 @@ async function load(schoolId: string, isAdmin: boolean, staffId: string) {
       };
     });
   const next = nextLesson(mine, tt.days);
-  return { counts, recent, next, hasBells: tt.periods.length > 0, lessonCount: tt.lessons.length };
+
+  // The next (or current) exams, and the papers I invigilate in them.
+  const exam = (examPeriods[0] as ExamPeriod | undefined) ?? null;
+  const nowHm = new Date().toTimeString().slice(0, 5);
+  const myPapers = exam
+    ? (
+        await supabase
+          .from('exam_papers')
+          .select('day, starts_at, subject_id, room')
+          .eq('exam_period_id', exam.id)
+          .eq('invigilator_id', staffId)
+          .gte('day', todayIso)
+          .order('day')
+          .order('starts_at')
+          .then(must)
+      ).filter((p) => p.day > todayIso || p.starts_at.slice(0, 5) >= nowHm)
+    : [];
+  const sittings = [...new Map(myPapers.map((p) => [`${p.day}|${p.starts_at}|${p.room ?? ''}`, p])).values()];
+  const nextPaper = sittings[0]
+    ? { ...sittings[0], subject: tt.subjects.find((x) => x.id === sittings[0].subject_id)?.name ?? 'Exam' }
+    : null;
+  const hasAlarms = mine.length > 0 || sittings.length > 0;
+  return {
+    counts,
+    recent,
+    next,
+    hasBells: tt.periods.length > 0,
+    lessonCount: tt.lessons.length,
+    exam,
+    invigilating: sittings.length,
+    nextPaper,
+    alarm,
+    needsAlarmPermission: hasAlarms && !!readiness && !readiness.notifications,
+  };
 }
 
 function greeting() {
@@ -73,7 +119,14 @@ export default function Home() {
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
-  const { counts: c, recent, next, hasBells, lessonCount } = data!;
+  const { counts: c, recent, next, hasBells, lessonCount, exam, invigilating, nextPaper, alarm, needsAlarmPermission } = data!;
+  const alarmNote = !alarm.enabled ? 'Lesson alarms are off' : alarm.resumeOn ? 'Alarms paused for the holiday' : `Alarm ${leadLabel(alarm.lead).toLowerCase()}`;
+  const examStatus = exam ? periodStatus(exam) : null;
+  const examText = exam
+    ? nextPaper
+      ? `You invigilate ${invigilating} ${invigilating === 1 ? 'paper' : 'papers'}. Next: ${dateLabel(nextPaper.day)}, ${formatTime(nextPaper.starts_at)} ${nextPaper.subject}`
+      : `${rangeLabel(exam.starts_on, exam.ends_on)}${exam.lessons_stop ? ' · Lesson alarms pause' : ''}`
+    : 'Plan the next exams: dates, papers and invigilators.';
   const lessonTitle = next
     ? `${formatTime(next.lesson.starts_at)} · ${next.lesson.what}`
     : isAdmin && !hasBells
@@ -134,6 +187,9 @@ export default function Home() {
             onPress={() => router.push('/staff')}
           />
         ) : null}
+        {needsAlarmPermission ? (
+          <Nudge icon="alarm-outline" text="Allow Zelvo to ring before your lessons" button="Turn on" onPress={() => router.push('/alarms')} />
+        ) : null}
         {c.requests > 0 ? (
           <Nudge
             icon="school-outline"
@@ -170,9 +226,35 @@ export default function Home() {
             <Text style={{ fontSize: 12, fontWeight: '700', color: colors.muted, letterSpacing: 0.4 }}>{next ? 'NEXT LESSON' : 'TIMETABLE'}</Text>
             <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{lessonTitle}</Text>
             <Text style={{ fontSize: 13, color: colors.muted }}>{lessonText}</Text>
+            {next && Platform.OS === 'android' ? (
+              <Pressable onPress={() => router.push('/alarms')} hitSlop={8} accessibilityRole="button" style={styles.alarmNote}>
+                <Ionicons name={alarm.enabled && !alarm.resumeOn ? 'notifications' : 'notifications-off-outline'} size={13} color={colors.primary} />
+                <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.primary }}>{alarmNote}</Text>
+              </Pressable>
+            ) : null}
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.faint} />
         </Pressable>
+
+        {exam || isAdmin ? (
+          <Pressable
+            onPress={() => router.push(exam ? { pathname: '/exam-timetable/[id]', params: { id: exam.id } } : '/exam-timetable')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.lesson, pressed && { opacity: 0.85 }]}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="document-text-outline" size={22} color={colors.accentText} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.muted, letterSpacing: 0.4 }}>
+                {exam ? `EXAMS · ${examStatus!.label.toUpperCase()}` : 'EXAM TIMETABLE'}
+              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{exam ? exam.name : 'No exams planned yet'}</Text>
+              <Text style={{ fontSize: 13, color: colors.muted }}>{examText}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.faint} />
+          </Pressable>
+        ) : null}
 
         {recent.length > 0 ? (
           <>
@@ -231,6 +313,7 @@ export default function Home() {
               <ListRow icon="people-outline" title="Classes" subtitle={plural(c.classes, 'class', 'classes')} onPress={() => router.push('/classes')} />
               <ListRow icon="book-outline" title="Departments" subtitle={plural(c.subjects, 'department', 'departments')} onPress={() => router.push('/subjects')} />
               <ListRow icon="id-card-outline" title="Staff" subtitle={plural(c.staff, 'member', 'members')} onPress={() => router.push('/staff')} />
+              <ListRow icon="document-text-outline" title="Exam timetable" subtitle="Exam dates and who invigilates" onPress={() => router.push('/exam-timetable')} />
             </Group>
           </>
         )}
@@ -253,14 +336,14 @@ function SetupProgress({ done, of }: { done: number; of: number }) {
 }
 
 /** An orange "needs your attention" card with a Review button. */
-function Nudge({ icon, text, onPress }: { icon: IconName; text: string; onPress: () => void }) {
+function Nudge({ icon, text, onPress, button = 'Review' }: { icon: IconName; text: string; onPress: () => void; button?: string }) {
   return (
     <View style={styles.nudge}>
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name={icon} size={20} color={colors.accentText} />
       </View>
       <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, fontWeight: '600', color: '#5A2504' }}>{text}</Text>
-      <Button small title="Review" onPress={onPress} style={{ backgroundColor: colors.accentText, borderColor: colors.accentText }} />
+      <Button small title={button} onPress={onPress} style={{ backgroundColor: colors.accentText, borderColor: colors.accentText }} />
     </View>
   );
 }
@@ -305,6 +388,7 @@ const styles = StyleSheet.create({
   },
   tileIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   tileLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
+  alarmNote: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, alignSelf: 'flex-start' },
   lesson: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Lesson alarms: ring at the exact minute and fill the screen, like a clock alarm. -->
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+</manifest>

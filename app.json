@@ -48,7 +48,21 @@
           "microphonePermission": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-notify-kit",
+        {
+          "android": {
+            "icons": [
+              {
+                "name": "ic_zelvo_alarm",
+                "path": "./assets/notification-icon.png",
+                "type": "small"
+              }
+            ]
+          }
+        }
+      ]
     ],
     "owner": "okafor_onyedikachukwu_flourish01",
     "extra": {

@@ -13,7 +13,7 @@ No payments.
 2. **Done:** exams and answer keys, plus the printable answer sheet (PDF)
 3. **Done:** scanning on the phone (works offline), a review screen for unclear answers, and results with export
 4. **Done:** timetable: bell times, timetable upload, clash checks and the teacher screens
-5. Alarms: offline scheduling, the full-screen alarm, syncing changes and exam timetable mode
+5. **Done:** lesson alarms (full-screen, offline, minutes-before chosen by each teacher) and the exam timetable
 6. Reading handwritten answers and names (foolscap mode)
 7. Item analysis, a test in a real school, and the release build
 
@@ -49,6 +49,17 @@ No payments.
 - **Spreadsheet:** Timetable → Spreadsheet → get the Excel template (columns Day, Period, Class, Subject, Teacher, Room, plus a sheet of the exact names). Upload a filled .xlsx or .csv: Zelvo matches days, periods (name, number or start time), classes, subjects and teachers (any word order, Mr/Mrs ignored), lists rows it can't use, then replaces the timetable or adds the lessons that don't clash.
 - **Clash checks** (also enforced by the database): a class has one lesson at a time, a teacher teaches one class at a time, no lessons in breaks or on closed days. Removing a period or closing a day removes its lessons.
 - **Teachers:** Home shows the next lesson (e.g. "10:40 · Mathematics · JSS 2B, in 25 min"); Timetable → My lessons shows their week. Students see today's lessons on their dashboard and the whole week under "See the whole week".
+
+## How stage 5 works (alarms and exams)
+
+- **Lesson alarms** ring before every lesson a teacher teaches, like a clock alarm: loud (alarm volume, rings in silent mode), vibrating, and full-screen over the lock screen with **Stop** and **Snooze 5 min**. Those buttons also work on the notification with Zelvo closed. An alarm nobody stops goes quiet after 5 minutes. A double period (the same class and subject back to back) rings once.
+- **Each teacher chooses** when it rings (Account → Lesson alarms, or tap "Alarm 5 min before" on Home): when the lesson starts, or 2, 5 (default), 10 or 15 minutes before. They can switch alarms off, pause them for a holiday until a chosen date, and ring a test alarm.
+- **Offline:** alarms are set on the phone for the next four weeks, so they ring with no data, and survive a restart. Each time Zelvo opens they're updated with timetable changes. If Zelvo isn't opened for weeks, a reminder asks the teacher to open it before the alarms run out. Logging out removes the phone's alarms.
+- **Phone settings:** the Lesson alarms screen checks what the phone needs (permission to ring, exact alarms, full-screen) and links to battery and auto-start settings, which Tecno, Infinix, itel and Xiaomi phones use to stop apps.
+- **Exam timetable** (School → Exam timetable): the vice-principal (or principal) adds an exam period (name, first and last day) and each paper: date, start and end time, subject, optional "Paper 1", the classes writing it, room and invigilator. Clashes are blocked: a class can't write two papers at once, and an invigilator can't be in two rooms at once (several classes in one hall is fine).
+- **During exams**, lesson alarms pause, and invigilators get an alarm before each paper they supervise. For exams only some classes write (e.g. SS3 mocks), switch off "Normal lessons stop" so lesson alarms carry on.
+- Everyone at the school can see the exam timetable (with "I invigilate" and by-class filters); Home shows the coming exams. Students see their class's papers on their dashboard and under "See all my exams".
+- **On the phone:** `modules/alarm-window` is a small Android part of Zelvo that lets only an alarm show over the lock screen (the rest of the app never does), plays the alarm on the alarm volume, and opens the full-screen setting. Alarms use react-native-notify-kit.
 
 ## Roles
 
@@ -111,7 +122,10 @@ src/app/                       Screens (Expo Router)
   (tabs)/index.tsx             Home: set-up checklist (admins) or school summary
   (tabs)/exams.tsx             Exams: your exams (admins also see everyone's)
   (tabs)/school.tsx            School: details, staff, classes, subjects
-  (tabs)/account.tsx           Account: switch school, join another, log out
+  (tabs)/account.tsx           Account: switch school, join another, lesson alarms, log out
+  alarm.tsx, alarms.tsx        The ringing alarm screen; Lesson alarms settings
+  exam-timetable/              Exam periods, papers day by day, add/change a period or paper
+  timetable/                   Bell times, lessons, spreadsheet upload
   staff/                       Staff list with join requests, staff member (position)
   join/                        "Who are you?" steps: head of school, staff, choose school
   classes/                     Class list, class detail, add students (paste or CSV)
@@ -128,6 +142,10 @@ src/lib/
   sheet/render.ts              Draws the answer sheets as printable HTML/SVG
   scan/                        Reads photos of answer sheets on the phone; offline upload queue
   scoring.ts, results.ts       Scores, CSV and PDF export
+  alarms.ts, useAlarms.ts      Plans and sets lesson and invigilation alarms; Stop and Snooze
+  examTimetable.ts             Exam periods and papers
+modules/alarm-window/          Zelvo's own Android code: alarm over the lock screen, alarm sound
+index.ts                       Start-up: handles alarm buttons pressed while Zelvo is closed
 supabase/migrations/           Database schema and security rules
 docs/answer-sheet-layout.md    Answer sheet layout and how the reader works
 tools/test/                    Realistic test photos for the reader

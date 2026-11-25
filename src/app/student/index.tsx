@@ -10,7 +10,9 @@ import { PHOTOS } from '../../lib/photos';
 import { useSchool } from '../../lib/school';
 import { scoreScript } from '../../lib/scoring';
 import { formatDate } from '../../lib/sheet/render';
-import { loadMyResults, loadMyTimetable } from '../../lib/studentResults';
+import { isoDate } from '../../lib/alarms';
+import { dateLabel } from '../../lib/examTimetable';
+import { loadMyExams, loadMyResults, loadMyTimetable } from '../../lib/studentResults';
 import { formatTime, today } from '../../lib/timetable';
 import { supabase } from '../../lib/supabase';
 import { useLoad } from '../../lib/useLoad';
@@ -61,7 +63,10 @@ export default function StudentHome() {
   // Confirmed first; otherwise the latest request (waiting for a teacher, or not confirmed).
   const me = studentAccounts.find((a) => a.status === 'approved') ?? studentAccounts[0];
   const confirmed = me?.status === 'approved';
-  const { data, loading, error, reload, refresh, refreshing } = useLoad(() => Promise.all([loadMyResults(), loadMyTimetable()]), me?.id ?? '');
+  const { data, loading, error, reload, refresh, refreshing } = useLoad(
+    () => Promise.all([loadMyResults(), loadMyTimetable(), loadMyExams().catch(() => [])]),
+    me?.id ?? '',
+  );
   useLightStatusBar();
 
   async function logOut() {
@@ -70,7 +75,9 @@ export default function StudentHome() {
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} onRetry={reload} />;
-  const [resultRows, timetable] = data ?? [[], []];
+  const [resultRows, timetable, examRows] = data ?? [[], [], []];
+  const t = isoDate(new Date());
+  const exams = examRows.filter((p) => p.day >= t && (!me || p.class_id === me.classId));
   const todays = timetable
     .filter((l) => l.day === today() && (!me || l.class_id === me.classId))
     .sort((a, b) => a.period_no - b.period_no);
@@ -161,6 +168,30 @@ export default function StudentHome() {
           })}
         </>
       )}
+
+      {exams.length > 0 ? (
+        <>
+          <SectionTitle>Exams coming up</SectionTitle>
+          <View style={styles.todayCard}>
+            {exams.slice(0, 4).map((p, i, list) => (
+              <View key={`${p.day}-${p.starts_at}-${i}`} style={[styles.todayRow, i < list.length - 1 && { borderBottomWidth: 1, borderBottomColor: '#EEF0F5' }]}>
+                <View style={{ width: 86 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: p.day === t ? colors.accentText : colors.primary }}>
+                    {p.day === t ? 'Today' : dateLabel(p.day)}
+                  </Text>
+                  <Text style={{ fontSize: 12.5, color: colors.muted }}>{formatTime(p.starts_at)}</Text>
+                </View>
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.text }}>
+                  {p.subject}
+                  {p.paper ? <Text style={{ fontWeight: '400', color: colors.muted }}> · {p.paper}</Text> : null}
+                </Text>
+                {p.room ? <Text style={{ fontSize: 13, color: colors.muted }}>{p.room}</Text> : null}
+              </View>
+            ))}
+          </View>
+          <Button variant="secondary" small icon="document-text-outline" title="See all my exams" onPress={() => router.push('/student/exams')} />
+        </>
+      ) : null}
 
       <SectionTitle>Today</SectionTitle>
       <View style={styles.todayCard}>

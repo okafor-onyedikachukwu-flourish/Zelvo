@@ -9,3 +9,8 @@ export async function loadMyResults() {
 export async function loadMyTimetable() {
   return must(await supabase.rpc('my_timetable'));
 }
+
+/** The exam papers my class writes (current and coming exams, and the last two weeks). */
+export async function loadMyExams() {
+  return must(await supabase.rpc('my_exam_papers'));
+}
