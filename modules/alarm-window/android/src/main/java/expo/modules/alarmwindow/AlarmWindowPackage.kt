@@ -19,15 +19,13 @@ class AlarmWindowLifecycleListener : ReactActivityLifecycleListener {
   override fun onCreate(activity: Activity?, savedInstanceState: Bundle?) {
     if (activity == null) return
     AlarmWindow.activityRef = WeakReference(activity)
-    if (AlarmWindow.isAlarmLaunch(activity.intent)) {
-      AlarmWindow.showOverLock(activity, true)
-    }
+    AlarmWindow.handleLaunch(activity, activity.intent)
   }
 
   override fun onNewIntent(intent: Intent?): Boolean {
     if (!AlarmWindow.isAlarmLaunch(intent)) return false
     val activity = AlarmWindow.activityRef?.get() ?: return false
-    activity.runOnUiThread { AlarmWindow.showOverLock(activity, true) }
+    activity.runOnUiThread { AlarmWindow.handleLaunch(activity, intent) }
     return false
   }
 

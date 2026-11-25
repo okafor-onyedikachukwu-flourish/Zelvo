@@ -4,7 +4,7 @@ import { requireOptionalNativeModule } from 'expo';
 type AlarmWindowModule = {
   isLocked(): boolean;
   canUseFullScreen(): boolean;
-  setShowOverLock(show: boolean): Promise<boolean>;
+  takeAlarmLaunch(): boolean;
   leave(): Promise<boolean>;
   createAlarmChannel(id: string, name: string, description: string): Promise<boolean>;
   openFullScreenSettings(): Promise<boolean>;
@@ -19,7 +19,8 @@ export const AlarmWindow = {
   available: !!native,
   isLocked: (): boolean => native?.isLocked() ?? false,
   canUseFullScreen: (): boolean => native?.canUseFullScreen() ?? true,
-  setShowOverLock: async (show: boolean) => (native ? native.setShowOverLock(show) : false),
+  /** True once after an alarm opened Zelvo (from the lock screen or the notification). */
+  takeAlarmLaunch: (): boolean => native?.takeAlarmLaunch() ?? false,
   leave: async () => (native ? native.leave() : false),
   createAlarmChannel: async (id: string, name: string, description: string) =>
     native ? native.createAlarmChannel(id, name, description) : false,

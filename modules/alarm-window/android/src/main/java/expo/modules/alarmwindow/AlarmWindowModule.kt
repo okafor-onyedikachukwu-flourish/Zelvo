@@ -17,10 +17,8 @@ class AlarmWindowModule : Module() {
       AlarmWindow.canUseFullScreen(context)
     }
 
-    AsyncFunction("setShowOverLock") { show: Boolean ->
-      val activity = appContext.currentActivity ?: return@AsyncFunction false
-      activity.runOnUiThread { AlarmWindow.showOverLock(activity, show) }
-      true
+    Function("takeAlarmLaunch") {
+      AlarmWindow.takeLaunch()
     }
 
     AsyncFunction("leave") {

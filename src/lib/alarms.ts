@@ -426,13 +426,28 @@ export async function handleAlarmAction({ type, detail }: Event) {
   if (detail.pressAction?.id === 'snooze') await snoozeAlarm(n);
 }
 
-/** Alarms ringing right now, newest first. */
-export async function ringingAlarms() {
+/** An alarm shown longer ago than this has stopped ringing (it should have gone by itself). */
+const RINGING_MS = (RING_MINUTES + 1) * 60_000;
+
+async function shownAlarms() {
   if (Platform.OS !== 'android') return [];
   const shown = await notifee.getDisplayedNotifications();
-  return shown
-    .filter((d) => isAlarm(d.notification))
-    .sort((a, b) => Number(b.notification.data?.start ?? 0) - Number(a.notification.data?.start ?? 0));
+  return shown.filter((d) => isAlarm(d.notification));
+}
+
+/** Alarms ringing right now, newest first. */
+export async function ringingAlarms() {
+  const now = Date.now();
+  return (await shownAlarms())
+    .filter((d) => !d.date || now - Number(d.date) < RINGING_MS)
+    .sort((a, b) => Number(b.date ?? 0) - Number(a.date ?? 0));
+}
+
+/** Removes old alarm notifications that are still on show but no longer ringing. */
+export async function clearStaleAlarms() {
+  const now = Date.now();
+  const stale = (await shownAlarms()).filter((d) => d.date && now - Number(d.date) >= RINGING_MS && d.notification.id);
+  await Promise.all(stale.map((d) => notifee.cancelDisplayedNotification(d.notification.id!)));
 }
 
 // ===== Phone settings that alarms need =====

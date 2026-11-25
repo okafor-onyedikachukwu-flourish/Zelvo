@@ -2,8 +2,9 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { AppState, Platform } from 'react-native';
-import notifee, { EventType } from 'react-native-notify-kit';
-import { handleAlarmAction, isAlarm, ringingAlarms, syncAlarms, type StaffPlace } from './alarms';
+import notifee, { EventType, type Notification } from 'react-native-notify-kit';
+import { AlarmWindow } from '../../modules/alarm-window';
+import { clearStaleAlarms, handleAlarmAction, isAlarm, ringingAlarms, syncAlarms, type StaffPlace } from './alarms';
 import { useAuth } from './auth';
 import { useSchool } from './school';
 
@@ -26,6 +27,32 @@ export const setAlarmScreenVisible = (v: boolean) => {
   alarmScreenVisible = v;
 };
 
+// Each alarm opens the alarm screen once, and never more than a few times a minute.
+const shownFor = new Set<string>();
+const recentOpens: number[] = [];
+
+/** `key`: the alarm and when it was shown, so a test alarm rung twice opens the screen twice. */
+function openAlarmScreen(n: Notification, key: string) {
+  if (alarmScreenVisible || !n.id || shownFor.has(key)) return;
+  const now = Date.now();
+  while (recentOpens.length && now - recentOpens[0] > 60_000) recentOpens.shift();
+  if (recentOpens.length >= 3) return;
+  recentOpens.push(now);
+  shownFor.add(key);
+  alarmScreenVisible = true;
+  const data = n.data ?? {};
+  router.push({
+    pathname: '/alarm',
+    params: {
+      id: n.id,
+      title: n.title ?? '',
+      body: n.body ?? '',
+      kind: String(data.kind ?? ''),
+      start: String(data.start ?? ''),
+    },
+  });
+}
+
 /** `ready`: accounts have loaded and the screens are on show. */
 export function useAlarms(ready: boolean) {
   const { userId, places } = useAlarmPlaces();
@@ -41,32 +68,34 @@ export function useAlarms(ready: boolean) {
     return () => sub.remove();
   }, [ready, userId, places]);
 
-  // Show the alarm screen when an alarm is ringing.
+  // Show the alarm screen only when an alarm opened Zelvo, or rang while Zelvo was open.
   useEffect(() => {
     if (!ready || Platform.OS !== 'android') return;
     let cancelled = false;
-    const open = async () => {
-      if (alarmScreenVisible) return;
+    const showRinging = async (id?: string) => {
       try {
         const ringing = await ringingAlarms();
-        if (!cancelled && ringing.length > 0 && !alarmScreenVisible) {
-          alarmScreenVisible = true;
-          router.push('/alarm');
-        }
+        const d = id ? ringing.find((r) => r.notification.id === id) : ringing[0];
+        if (!cancelled && d) openAlarmScreen(d.notification, `${d.notification.id}:${d.date ?? ''}`);
       } catch {
         // No alarm screen: the notification itself still rings and has Stop and Snooze.
       }
     };
-    const first = setTimeout(open, 300);
+    const openedByAlarm = () => {
+      if (AlarmWindow.takeAlarmLaunch()) showRinging();
+    };
+    clearStaleAlarms().catch(() => undefined);
+    const first = setTimeout(openedByAlarm, 300);
     const unsubscribe = notifee.onForegroundEvent((event) => {
+      const n = event.detail.notification;
       if (event.type === EventType.ACTION_PRESS) {
         handleAlarmAction(event).catch(() => undefined);
         return;
       }
-      if ((event.type === EventType.DELIVERED || event.type === EventType.PRESS) && isAlarm(event.detail.notification)) open();
+      if ((event.type === EventType.DELIVERED || event.type === EventType.PRESS) && isAlarm(n)) showRinging(n?.id);
     });
     const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') open();
+      if (s === 'active') openedByAlarm();
     });
     return () => {
       cancelled = true;

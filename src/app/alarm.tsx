@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, BackHandler, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Notification } from 'react-native-notify-kit';
@@ -14,7 +14,13 @@ import { setAlarmScreenVisible } from '../lib/useAlarms';
 export default function AlarmScreen() {
   useLightStatusBar();
   const insets = useSafeAreaInsets();
-  const [alarm, setAlarm] = useState<Notification | null>(null);
+  // The alarm's details come with the screen, so it shows straight away.
+  const params = useLocalSearchParams<{ id?: string; title?: string; body?: string; kind?: string; start?: string }>();
+  const [alarm, setAlarm] = useState<Notification | null>(
+    params.id
+      ? { id: params.id, title: params.title || undefined, body: params.body || undefined, data: { kind: params.kind ?? '', start: params.start ?? '' } }
+      : null,
+  );
   const [now, setNow] = useState(new Date());
   const [busy, setBusy] = useState(false);
   const leaving = useRef(false);
@@ -29,15 +35,15 @@ export default function AlarmScreen() {
     else router.replace('/');
   }, []);
 
-  // Which alarm is ringing; close when none is (stopped from the notification, or it went quiet).
+  // Close when the alarm stops ringing (stopped from the notification, or it went quiet).
   useEffect(() => {
     setAlarmScreenVisible(true);
-    AlarmWindow.setShowOverLock(true).catch(() => undefined);
     const check = async () => {
       try {
         const ringing = await ringingAlarms();
-        if (ringing.length === 0) leave();
-        else setAlarm(ringing[0].notification);
+        const mine = params.id ? ringing.find((r) => r.notification.id === params.id) : ringing[0];
+        if (!mine) leave();
+        else setAlarm(mine.notification);
       } catch {
         leave();
       }

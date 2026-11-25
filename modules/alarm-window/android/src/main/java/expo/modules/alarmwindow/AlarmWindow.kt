@@ -24,9 +24,18 @@ import java.lang.ref.WeakReference
  */
 object AlarmWindow {
   const val MARKER = "zelvo-alarm"
+  private const val HANDLED = "zelvo-alarm-handled"
 
   @Volatile
   var activityRef: WeakReference<Activity>? = null
+
+  /** True while the app is showing over the lock screen for an alarm. */
+  @Volatile
+  private var overLock = false
+
+  /** An alarm opened the app and the alarm screen hasn't been shown for it yet. */
+  @Volatile
+  private var pendingLaunch = false
 
   fun isAlarmLaunch(intent: Intent?): Boolean {
     if (intent == null) return false
@@ -37,7 +46,27 @@ object AlarmWindow {
     }
   }
 
-  fun showOverLock(activity: Activity, show: Boolean) {
+  /**
+   * Called when the activity is created or gets a new intent. Each alarm launch is handled once:
+   * the intent is marked, so a recreated activity doesn't show over the lock screen again.
+   */
+  fun handleLaunch(activity: Activity, intent: Intent?) {
+    if (intent == null || !isAlarmLaunch(intent)) return
+    if (intent.getBooleanExtra(HANDLED, false)) return
+    intent.putExtra(HANDLED, true)
+    pendingLaunch = true
+    showOverLock(activity, true)
+  }
+
+  /** Whether an alarm opened the app since the last time this was asked. */
+  fun takeLaunch(): Boolean {
+    val launched = pendingLaunch
+    pendingLaunch = false
+    return launched
+  }
+
+  private fun showOverLock(activity: Activity, show: Boolean) {
+    overLock = show
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
       activity.setShowWhenLocked(show)
       activity.setTurnScreenOn(show)
@@ -59,8 +88,12 @@ object AlarmWindow {
     return keyguard.isKeyguardLocked
   }
 
-  /** Stops showing over the lock screen; if the phone is locked, returns to the lock screen. */
+  /**
+   * After an alarm shown over the lock screen: stop showing over it, and if the phone is locked,
+   * return to the lock screen. Does nothing for alarms that rang while the app was open.
+   */
   fun leave(activity: Activity) {
+    if (!overLock) return
     val locked = isLocked(activity)
     showOverLock(activity, false)
     if (locked) activity.moveTaskToBack(true)
